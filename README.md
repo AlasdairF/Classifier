@@ -22,14 +22,14 @@ Define your categories, this must be a slice of strings: `[]string`.
 
 	classifier.DefineCategories(categories)
 	
-Add training files, category is a string, tokens is a slice of strings.
+Add training documents, category is a string, tokens is a slice of strings.
 
-	err := classifier.AddTrainingFile(category,tokens)
+	err := classifier.AddTrainingDoc(category,tokens)
 	// and again for each training file
 	
 If you are going to use the `Test` feature to optimize for the best variables for training then you need to add test files. If you don't have any test files then you can add the training files as test files too, this will give you a higher than true accuracy report but it will still help the `Test` function determine the best variables for the classifier.
 
-	err := classifier.AddTestFile(category,tokens)
+	err := classifier.AddTestDoc(category,tokens)
 	// keep doing it for each one
 	
 The classifier uses two variables called `allowance` and `maxscore` to optimize the classifier. Both are `float64`. `allowance` means that any word with a score below this will not be included in the classifier. `maxscore` means that no word can be given a score of more than this in the classifier. It is best to let the `Test` function choose these for you.
