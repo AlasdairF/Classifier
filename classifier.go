@@ -52,8 +52,7 @@ Score float64
 // --------------- FUNCTIONS ---------------
 
 // randomList is a helper function to generate random lists of integers for the ensemble function. It does not need to be seeded since it is good for the random numbers to be the same for the same content.
-func randomList(num int) []int {
-	wanted := (num+1)/2 // +1 makes it ceil instead of floor
+func randomList(num int, wanted int) []int {
 	output := make([]int,wanted)
 	used := make([]bool,num)
 	for got:=0; got<wanted; { // while got<wanted
@@ -146,15 +145,15 @@ func (t *Trainer) ensemble() {
 	// Loop through all categories of training docs
 	for indx,cat := range t.Categories {
 		// Generate 20x ensembles of 50% tokens
-		tokens_per_ensemble := (len(t.trainingTokens[indx])+1)/2
+		num_tokens := len(t.trainingTokens[indx])
+		per_ensemble := (num_tokens+1)/2
 		for i:=0; i<number_of_ensembles; i++ {
 			ensembleindx := t.category_ensemble_index[cat][i]
-			tokloop := randomList(tokens_per_ensemble) // select 50% random sampling for this category
-			n := len(tokloop)
-			nlist[ensembleindx]=n
-			total += uint64(n)
+			tokloop := randomList(num_tokens,per_ensemble) // select 50% random sampling for this category
+			nlist[ensembleindx]=per_ensemble
+			total += uint64(per_ensemble)
 			tokmap[ensembleindx] = make(map[string]uint)
-			for i2:=0; i2<n; i2++ {
+			for i2:=0; i2<per_ensemble; i2++ {
 				tok := t.trainingTokens[indx][tokloop[i2]]
 				tokmap[ensembleindx][tok]++
 				bigmap[tok]++
