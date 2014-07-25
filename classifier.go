@@ -17,7 +17,7 @@ The number of ensembles can be changed here from 20 to any other number.
 Do not use 1. Reasonable numbers are 10-50, but more does not necessarily mean better.
 
 */
-const number_of_ensembles = 30
+const number_of_ensembles = 10
 
 
 // --------------- STRUCTS ---------------
