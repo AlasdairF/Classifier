@@ -14,7 +14,7 @@ import (
 /*
 
 The number of ensembles can be changed here from 20 to any other number.
-Do not use 1. Reasonably numbers are 10-50, but more does not necessarily mean better.
+Do not use 1. Reasonable numbers are 10-50, but more does not necessarily mean better.
 
 */
 const number_of_ensembles = 20
@@ -304,7 +304,7 @@ func (t *Trainer) Test(verbose bool) (float64, float64, error) {
 	return bestallowance, bestmaxscore, nil
 }
 
-// Loads a classifier from a file previously saved with Save 
+// Loads a classifier from a file previously saved with Save.
 func (t *Classifier) Load(filename string) error {
 	
 	fi, err := os.Open(filename)
@@ -328,7 +328,7 @@ func (t *Classifier) Load(filename string) error {
 	return nil
 }
 
-// Saves classifier last created with Create to a file
+// Saves classifier last created with Create to a file.
 func (t *Trainer) Save(filename string) error {
 	
 	fi, err := os.Create(filename)
