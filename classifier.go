@@ -270,10 +270,9 @@ func (t *Trainer) Test(verbose bool) (float64, float64, error) {
 	var bestallowance float64
 	var bestmaxscore float64
 	// auto is the list of numbers to try for allowance and maxscore
-	var auto_allowance = [...]float64{0,1.05,1.1,1.15,1.2,1.25,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.5,3,4,5,6,7,8,9,10,15,20,25,30,40,50,75,100,150,200,300,400,500,600,700,800,900,1000,1500,2000,3000,4000,5000,10000,20000,50000,100000,1000000}
-	var auto_maxscore = [...]float64{0,10000000,1000000,100000,50000,20000,10000,5000,4000,3000,2000,1500,1200,1000,900,800,700,600,550,500,475,450,425,400,375,350,325,300,275,250,225,200,150,100,75,50,40,30,25,20,15,10,8,6,4,2}
-	for _,allowance := range auto_allowance { // loop through auto for allowance
-		for _,maxscore := range auto_maxscore { // loop through auto for maxscore
+	var auto = [...]float64{0,1,1.1,1.2,1.3,1.4,1.5,1.75,2,3,4,5,6,7,8,9,10,15,20,25,30,40,50,75,100,150,200,250,300,350,400,450,500,600,700,800,900,1000,1200,1500,2000,3000,4000,5000,10000,20000,50000,100000,1000000,10000000}
+	for _,allowance := range auto { // loop through auto for allowance
+		for _,maxscore := range auto { // loop through auto for maxscore
 			t.Create(allowance,maxscore) // build the classifier for allowance & maxscore
 			correct := 0
 			// Count the number of correct results from testDocs under this classifier
