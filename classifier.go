@@ -17,7 +17,7 @@ The number of ensembles can be changed here from 20 to any other number.
 Do not use 1. Reasonable numbers are 10-50, but more does not necessarily mean better.
 
 */
-const number_of_ensembles = 20
+const number_of_ensembles = 30
 
 
 // --------------- STRUCTS ---------------
@@ -271,7 +271,7 @@ func (t *Trainer) Test(verbose bool) (float64, float64, error) {
 	var bestallowance float64
 	var bestmaxscore float64
 	// auto is the list of numbers to try for allowance and maxscore
-	var auto = [...]float64{0,1,1.1,1.2,1.3,1.4,1.5,1.75,2,3,4,5,6,7,8,9,10,15,20,25,30,40,50,75,100,150,200,300,400,500,600,700,800,900,1000,1200,1500,2000,3000,4000,5000,10000,20000,50000,100000,500000,1000000,10000000,100000000}
+	var auto = [...]float64{0,1,1.1,1.2,1.3,1.4,1.5,1.75,2,3,4,5,6,7,8,9,10,15,20,25,30,40,50,75,100,150,200,250,300,350,400,450,500,600,700,800,900,1000,1200,1500,2000,3000,4000,5000,10000,20000,50000,100000,1000000,10000000}
 	for _,allowance := range auto { // loop through auto for allowance
 		for _,maxscore := range auto { // loop through auto for maxscore
 			t.Create(allowance,maxscore) // build the classifier for allowance & maxscore
