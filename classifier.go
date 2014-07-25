@@ -14,10 +14,10 @@ import (
 /*
 
 The number of ensembles can be changed here from 20 to any other number.
-Do not use 1. Reasonable numbers are 10-50, but more does not necessarily mean better.
+It works best on 20, that's why it's hardcoded.
 
 */
-const number_of_ensembles = 10
+const number_of_ensembles = 20
 
 
 // --------------- STRUCTS ---------------
