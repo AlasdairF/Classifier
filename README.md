@@ -34,7 +34,7 @@ If you are going to use the `Test` feature to optimize for the best variables fo
 	
 The classifier uses two variables called `allowance` and `maxscore` to optimize the classifier. Both are `float64`. `allowance` means that any word with a score below this will not be included in the classifier. `maxscore` means that no word can be given a score of more than this in the classifier. It is best to let the `Test` function choose these for you.
 
-To use the `Test` function (once you've added training and test files) you only need to do as follows. Note that if `verbose` is set to true then you will get thousands of lines output to Stdout telling you the accuracy level of each test and which one was best; if it's set to false then it it's silent.
+To use the `Test` function (once you've added training and test files) you only need to do as follows. Note that if `verbose` is set to true then you will get thousands of lines output to Stdout telling you the accuracy level of each test and which one was best; if it's set to false then it's silent.
 
 	verbose := true
     allowance, maxscore, err := classifier.Test(verbose)
