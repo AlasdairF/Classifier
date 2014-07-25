@@ -43,7 +43,7 @@ tok string
 score float64
 }
 
-// Scorer and ClassifierVar must be exported variables (begin with a capital) so they can be accessed by the gob functionality used for Load & Save.
+// You can ignore this. Scorer must be able to be exported (begin with a capital) so it can be accessed by the gob functionality used for Load & Save.
 type Scorer struct {
 Category int
 Score float64
