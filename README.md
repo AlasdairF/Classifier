@@ -25,7 +25,7 @@ Define your categories, this must be a slice of strings: `[]string`.
 Add training documents, category is a string, tokens is a slice of strings.
 
 	err := classifier.AddTrainingDoc(category,tokens)
-	// and again for each training file
+	// and again for each training document
 	
 If you are going to use the `Test` feature to optimize for the best variables for training then you need to add test files. If you don't have any test files then you can add the training files as test files too, this will give you a higher than true accuracy report but it will still help the `Test` function determine the best variables for the classifier.
 
@@ -34,7 +34,7 @@ If you are going to use the `Test` feature to optimize for the best variables fo
 	
 The classifier uses two variables called `allowance` and `maxscore` to optimize the classifier. Both are `float64`. `allowance` means that any word with a score below this will not be included in the classifier. `maxscore` means that no word can be given a score of more than this in the classifier. It is best to let the `Test` function choose these for you.
 
-To use the `Test` function (once you've added training and test files) you only need to do as follows. Note that if `verbose` is set to true then you will get thousands of lines output to Stdout telling you the accuracy level of each test and which one was best; if it's set to false then it's silent.
+To use the `Test` function (once you've added training and test files) you only need to do as follows. Note that if `verbose` is set to true then you will get thousands of lines output to Stdout telling you the accuracy level of each test and which one was best; if it's set to false then it's silent. `Test` returns the best values for `allowance` and `maxscore`.
 
 	verbose := true
     allowance, maxscore, err := classifier.Test(verbose)
@@ -47,7 +47,7 @@ Then save it to a file:
 
     classifier.Save(`myshiz.classifier`)
 	
-You can also use any of the Classification functions below on your `Trainer` object, if you want to start classifying right away. You only need to create a new object if you are loading a classifier from a file.
+You can also use any of the Classification functions below on your `Trainer` object, if you want to start classifying right away. You only need to create a new `Classifier` object if you are loading a classifier from a file since the `Trainer` object inherits all of the functions of the `Classifier` object.
 
 
 ## Classification
