@@ -45,7 +45,7 @@ score float64
 
 // You can ignore this. Scorer must be able to be exported (begin with a capital) so it can be accessed by the gob functionality used for Load & Save.
 type Scorer struct {
-Category int
+Category uint16
 Score float64
 }
 
@@ -220,11 +220,11 @@ func (t *Trainer) Create(allowance float64, maxscore float64) {
 				temp := len(old)
 				newone := make([]Scorer,temp+1)
 				copy(newone,old)
-				newone[temp]=Scorer{indx,score}
+				newone[temp]=Scorer{uint16(indx),score}
 				t.ClassifierVar[tok]=newone
 			} else {
 				newone := make([]Scorer,1)
-				newone[0]=Scorer{indx,score}
+				newone[0]=Scorer{uint16(indx),score}
 				t.ClassifierVar[tok]=newone			
 			}
 		}
