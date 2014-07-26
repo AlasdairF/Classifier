@@ -40,13 +40,13 @@ ClassifierVar map[string][]Scorer
 
 type word struct {
 tok string
-score float64
+score float32
 }
 
 // You can ignore this. Scorer must be able to be exported (begin with a capital) so it can be accessed by the gob functionality used for Load & Save.
 type Scorer struct {
 Category uint16
-Score float64
+Score float32
 }
 
 // --------------- FUNCTIONS ---------------
@@ -161,10 +161,10 @@ func (t *Trainer) ensemble() {
 		}
 	}
 	// And add to the overall counts
-	ensembleTokAvg := make(map[string]float64)
-	l := float64(total)
+	ensembleTokAvg := make(map[string]float32)
+	l := float32(total)
 	for tok,count := range bigmap {
-		ensembleTokAvg[tok]=float64(count)/l
+		ensembleTokAvg[tok]=float32(count)/l
 	}
 	// Now prune ensembleContent to remove all that are less than avg and therefore useless
 	t.ensembleContent = make([][]word,len(t.Categories)*number_of_ensembles)
@@ -175,7 +175,7 @@ func (t *Trainer) ensemble() {
 			good := 0
 			for tok,count := range tokmap[ensembleindx] {
 				if count>1 {
-					if avg := float64(count)/float64(nlist[ensembleindx]); avg>ensembleTokAvg[tok] {
+					if avg := float32(count)/float32(nlist[ensembleindx]); avg>ensembleTokAvg[tok] {
 						score := avg/ensembleTokAvg[tok]
 						ensembleContent[good] = word{tok,score}
 						good++
@@ -191,7 +191,7 @@ func (t *Trainer) ensemble() {
 }
 
 // Create builds the classifier using the two variables allowance & maxscore. Set allowance & maxscore to 0 for no limits.
-func (t *Trainer) Create(allowance float64, maxscore float64) {
+func (t *Trainer) Create(allowance float32, maxscore float32) {
 	// First run ensemble if it hasn't been run already
 	if t.ensembled==false {
 		t.ensemble()
@@ -200,7 +200,7 @@ func (t *Trainer) Create(allowance float64, maxscore float64) {
 	// Now build the classifier
 	t.ClassifierVar = make(map[string][]Scorer)
 	for indx,cat := range t.Categories { // loop through categories
-		tally := make(map[string]float64) // create tally for scores from this category
+		tally := make(map[string]float32) // create tally for scores from this category
 		for i:=0; i<number_of_ensembles; i++ { // loop through ensemble categories
 			ensembleindx := t.category_ensemble_index[cat][i] // get the index for this ensemble category
 			l := len(t.ensembleContent[ensembleindx]) // get the number of tokens in this ensemble category
@@ -231,9 +231,9 @@ func (t *Trainer) Create(allowance float64, maxscore float64) {
 	}
 }
 
-// Classify classifies tokens and returns a slice of float64 where each index is the same as the index for the category name in classifier.Categories, which is the same as the []string of categories originally past to DefineCategories.
-func (t *Classifier) Classify(tokens []string) []float64 {
-	scoreboard := make([]float64,len(t.Categories))
+// Classify classifies tokens and returns a slice of float32 where each index is the same as the index for the category name in classifier.Categories, which is the same as the []string of categories originally past to DefineCategories.
+func (t *Classifier) Classify(tokens []string) []float32 {
+	scoreboard := make([]float32,len(t.Categories))
 	for _,tok := range tokens {
 		if rules,ok := t.ClassifierVar[tok]; ok {
 			for i:=0; i<len(rules); i++ {
@@ -244,10 +244,10 @@ func (t *Classifier) Classify(tokens []string) []float64 {
 	return scoreboard
 }
 
-// ClassifySimple is a wrapper for Classify, it returns the name of the best category as a string, and the score of the best category as float64.
-func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
+// ClassifySimple is a wrapper for Classify, it returns the name of the best category as a string, and the score of the best category as float32.
+func (t *Classifier) ClassifySimple(tokens []string) (string, float32) {
 	scoreboard := t.Classify(tokens)
-	var bestscore float64
+	var bestscore float32
 	var bestcat int
 	for cat,score := range scoreboard {
 		if score>bestscore {
@@ -259,19 +259,19 @@ func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
 }
 
 // Test tries 2,401 different combinations of allowance & maxscore then returns the values of allowance & maxscore which performs the best. Test requires an argument of true or false for verbose, if true Test will print all results to Stdout. 
-func (t *Trainer) Test(verbose bool) (float64, float64, error) {
+func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 	// Check there are test files
 	if t.num_test_docs==0 {
 		err := errors.New(`Test: Add test files`)
 		return 0, 0, err
 	}
 	// Set some variables
-	var bestaccuracy float64
-	var bestallowance float64
-	var bestmaxscore float64
+	var bestaccuracy float32
+	var bestallowance float32
+	var bestmaxscore float32
 	// auto is the list of numbers to try for allowance and maxscore
-	var auto_allowance = [...]float64{0,1.05,1.1,1.15,1.2,1.25,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.5,3,4,5,6,7,8,9,10,15,20,25,30,40,50,75,100,150,200,300,400,500,600,700,800,900,1000,1500,2000,3000,4000,5000,10000,20000,50000,100000,1000000}
-	var auto_maxscore = [...]float64{0,10000000,1000000,100000,50000,20000,10000,5000,4000,3000,2000,1500,1200,1000,900,800,700,600,550,500,475,450,425,400,375,350,325,300,275,250,225,200,150,100,75,50,40,30,25,20,15,10,8,6,4,2}
+	var auto_allowance = [...]float32{0,1.05,1.1,1.15,1.2,1.25,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.5,3,4,5,6,7,8,9,10,15,20,25,30,40,50,75,100,150,200,300,400,500,600,700,800,900,1000,1500,2000,3000,4000,5000,10000,20000,50000,100000,1000000}
+	var auto_maxscore = [...]float32{0,10000000,1000000,100000,50000,20000,10000,5000,4000,3000,2000,1500,1200,1000,900,800,700,600,550,500,475,450,425,400,375,350,325,300,275,250,225,200,150,100,75,50,40,30,25,20,15,10,8,6,4,2}
 	for _,allowance := range auto_allowance { // loop through auto for allowance
 		for _,maxscore := range auto_maxscore { // loop through auto for maxscore
 			t.Create(allowance,maxscore) // build the classifier for allowance & maxscore
@@ -285,7 +285,7 @@ func (t *Trainer) Test(verbose bool) (float64, float64, error) {
 				}
 			}
 			// And the accuracy is:
-			accuracy := float64(correct)/float64(t.num_test_docs)
+			accuracy := float32(correct)/float32(t.num_test_docs)
 			if verbose {
 				fmt.Printf("allowance %g, maxscore %g = %f (%d correct)\n",allowance,maxscore,accuracy,correct)
 			}
