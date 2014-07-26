@@ -16,7 +16,7 @@ For people who are not familiar with classifiers: you start with your list of ca
 
 Start the trainer:
 
-    classifier := new(Trainer)
+    classifier := new(classifier.Trainer)
 	
 Define your categories, this must be a slice of strings: `[]string`.
 
@@ -56,7 +56,7 @@ You can also use any of the Classification functions below on your `Trainer` obj
 
 Start the classifier:
 
-    classifier := new(Classifier)
+    classifier := new(classifier.Classifier)
 
 Load the classifier you previously saved:
 
