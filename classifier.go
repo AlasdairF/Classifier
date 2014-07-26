@@ -313,16 +313,16 @@ func (t *Classifier) Load(filename string) error {
 	}
 	defer fi.Close()
 	
-    fz, err := gzip.NewReader(fi)
-	if err !=nil {
-		return err
+    fz, err2 := gzip.NewReader(fi)
+	if err2 !=nil {
+		return err2
 	}
 	defer fz.Close()
 	
 	decoder := gob.NewDecoder(fz)
-	err = decoder.Decode(&t)
-	if err !=nil {
-		return err
+	err3 = decoder.Decode(&t)
+	if err3 !=nil {
+		return err3
 	}
 	
 	return nil
@@ -341,9 +341,9 @@ func (t *Trainer) Save(filename string) error {
 	defer fz.Close()
 	
 	encoder := gob.NewEncoder(fz)
-	err = encoder.Encode(t.Classifier)
-	if err !=nil {
-		return err
+	err2 = encoder.Encode(t.Classifier)
+	if err2 !=nil {
+		return err2
 	}
 	
 	return nil
