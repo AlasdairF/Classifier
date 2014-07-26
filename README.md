@@ -32,7 +32,7 @@ If you are going to use the `Test` feature to optimize for the best variables fo
 	err := classifier.AddTestDoc(category,tokens)
 	// keep doing it for each one
 	
-The classifier uses two variables called `allowance` and `maxscore` to optimize the classifier. Both are `float64`. `allowance` means that any word with a score below this will not be included in the classifier. `maxscore` means that no word can be given a score of more than this in the classifier. It is best to let the `Test` function choose these for you.
+The classifier uses two variables called `allowance` and `maxscore` to optimize the classifier. Both are `float32`. `allowance` means that any word with a score below this will not be included in the classifier. `maxscore` means that no word can be given a score of more than this in the classifier. It is best to let the `Test` function choose these for you.
 
 To use the `Test` function (once you've added training and test files) you only need to do as follows. Note that if `verbose` is set to true then you will get thousands of lines output to Stdout telling you the accuracy level of each test and which one was best; if it's set to false then it's silent. `Test` returns the best values for `allowance` and `maxscore`.
 
@@ -70,9 +70,9 @@ Classify something:
 
     scores := classifier.Classify(tokens)
 	
-The above will give you a slice of `float64` where each index represents the index of the category in `classifier.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `float64` is the score for this category. You may need to sort this list.
+The above will give you a slice of `float32` where each index represents the index of the category in `classifier.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `float32` is the score for this category. You may need to sort this list.
 
-To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do this, which returns the `string` of the category that this document best matches and its score as `float64`:
+To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do this, which returns the `string` of the category that this document best matches and its score as `float32`:
 
     category, score := classifier.ClassifySimple(tokens)
 	
