@@ -232,12 +232,12 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 }
 
 // Classify classifies tokens and returns a slice of float32 where each index is the same as the index for the category name in classifier.Categories, which is the same as the []string of categories originally past to DefineCategories.
-func (t *Classifier) Classify(tokens []string) []float32 {
-	scoreboard := make([]float32,len(t.Categories))
+func (t *Classifier) Classify(tokens []string) []float64 {
+	scoreboard := make([]float64,len(t.Categories))
 	for _,tok := range tokens {
 		if rules,ok := t.ClassifierVar[tok]; ok {
 			for i:=0; i<len(rules); i++ {
-				scoreboard[rules[i].Category]+=rules[i].Score
+				scoreboard[rules[i].Category]+=float64(rules[i].Score)
 			}
 		}
 	}
@@ -245,10 +245,10 @@ func (t *Classifier) Classify(tokens []string) []float32 {
 }
 
 // ClassifySimple is a wrapper for Classify, it returns the name of the best category as a string, and the score of the best category as float32.
-func (t *Classifier) ClassifySimple(tokens []string) (string, float32) {
+func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
 	scoreboard := t.Classify(tokens)
-	var bestscore float32
-	var bestcat int
+	var bestscore float64
+	var bestcat uint16
 	for cat,score := range scoreboard {
 		if score>bestscore {
 			bestscore=score
