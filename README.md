@@ -70,9 +70,9 @@ Classify something:
 	
 The above will give you a slice of `float64` where each index represents the index of the category in `classifier.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `float64` is the score for this category. You may need to sort this list.
 
-To make things easy, if you want *only* the best matching category and not the scores then you can do this, which returns only a `string` of the category this document best matches:
+To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do this, which returns the `string` of the category that this document best matches and its score as `float64`:
 
-    category := classifier.ClassifySimple(tokens)
+    category, score := classifier.ClassifySimple(tokens)
 	
 
 ## Tokenization
