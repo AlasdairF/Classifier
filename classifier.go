@@ -249,6 +249,7 @@ func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
 	scoreboard := t.Classify(tokens)
 	var bestscore float64
 	var bestcat uint16
+	var cat uint16
 	for cat,score := range scoreboard {
 		if score>bestscore {
 			bestscore=score
