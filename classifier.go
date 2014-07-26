@@ -70,12 +70,12 @@ func randomList(num int, wanted int) []int {
 func (t *Trainer) DefineCategories(categories []string) {
 	// Reset & init
 	t.category_ensemble_index = make(map[string][number_of_ensembles]int)
-	t.category_index = make(map[string]int)
+	t.Category_index = make(map[string]int)
 	// Now generate forward and reverse index for categories <-> ensembles <-> indices
 	t.Categories=categories
 	current := 0
 	for i,category := range categories {
-		t.category_index[category]=i
+		t.Category_index[category]=i
 		var temp [number_of_ensembles]int
 		for i2:=0; i2<number_of_ensembles; i2++ {
 			temp[i2]=current
@@ -91,7 +91,7 @@ func (t *Trainer) DefineCategories(categories []string) {
 func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
 	t.ensembled=false // Needs to be ensembled whenever a training doc is added
 	// Check to see if category exists already, if it doesn't then add it
-	indx,ok := t.category_index[category]
+	indx,ok := t.Category_index[category]
 	if !ok {
 		return errors.New(`AddTrainingDoc: Category '`+category+`' not defined`)
 	}
@@ -116,7 +116,7 @@ func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
 // AddTestDoc adds a document for testing under the Test function.
 func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 	// Check to see if category exists already, if it doesn't then add it
-	indx,ok := t.category_index[category]
+	indx,ok := t.Category_index[category]
 	if !ok {
 		return errors.New(`AddTestDoc: Category '`+category+`' not defined`)
 	}
