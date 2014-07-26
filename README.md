@@ -45,9 +45,11 @@ You can now create your classifier:
 	
 Then save it to a file:
 
-    classifier.Save(`myshiz.classifier`)
+    err := classifier.Save(`myshiz.classifier`)
 	
 You can also use any of the Classification functions below on your `Trainer` object, if you want to start classifying right away. You only need to create a new `Classifier` object if you are loading a classifier from a file since the `Trainer` object inherits all of the functions of the `Classifier` object.
+
+*Note: following common Go style, the `err` variables above denote where the function may return an error message if something goes wrong, if `err` is `nil` then nothing is wrong. Not all of the functions return an error variable. For example, `classifier.Create` does not return anything.*
 
 
 ## Classification
@@ -58,7 +60,7 @@ Start the classifier:
 
 Load the classifier you previously saved:
 
-    classifier.Load(`myshiz.classifier`)
+    err := classifier.Load(`myshiz.classifier`)
 	
 If you need to reload the categories they are here as a slice of strings:
 
