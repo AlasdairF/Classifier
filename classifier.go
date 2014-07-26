@@ -244,18 +244,18 @@ func (t *Classifier) Classify(tokens []string) []float64 {
 	return scoreboard
 }
 
-// ClassifySimple is a wrapper for Classify, it returns only the name of the best category as a string.
-func (t *Classifier) ClassifySimple(tokens []string) string {
+// ClassifySimple is a wrapper for Classify, it returns the name of the best category as a string, and the score of the best category as float64.
+func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
 	scoreboard := t.Classify(tokens)
-	var bestsofar float64
+	var bestscore float64
 	var bestcat int
 	for cat,score := range scoreboard {
-		if score>bestsofar {
-			bestsofar=score
+		if score>bestscore {
+			bestscore=score
 			bestcat=cat
 			}
 		}
-	return t.Categories[bestcat]
+	return t.Categories[bestcat], bestscore
 }
 
 // Test tries 2,401 different combinations of allowance & maxscore then returns the values of allowance & maxscore which performs the best. Test requires an argument of true or false for verbose, if true Test will print all results to Stdout. 
@@ -279,7 +279,7 @@ func (t *Trainer) Test(verbose bool) (float64, float64, error) {
 			// Count the number of correct results from testDocs under this classifier
 			for indx,cat := range t.Categories {
 				for i:=0; i<len(t.testDocs[indx]); i++ {
-					if t.ClassifySimple(t.testDocs[indx][i])==cat {
+					if temp,_ := t.ClassifySimple(t.testDocs[indx][i]); temp==cat {
 						correct++
 					}
 				}
