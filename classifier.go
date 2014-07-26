@@ -320,7 +320,7 @@ func (t *Classifier) Load(filename string) error {
 	defer fz.Close()
 	
 	decoder := gob.NewDecoder(fz)
-	err3 = decoder.Decode(&t)
+	err3 := decoder.Decode(&t)
 	if err3 !=nil {
 		return err3
 	}
@@ -341,7 +341,7 @@ func (t *Trainer) Save(filename string) error {
 	defer fz.Close()
 	
 	encoder := gob.NewEncoder(fz)
-	err2 = encoder.Encode(t.Classifier)
+	err2 := encoder.Encode(t.Classifier)
 	if err2 !=nil {
 		return err2
 	}
