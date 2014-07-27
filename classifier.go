@@ -215,16 +215,17 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 				}
 			}
 		// Enter tallys into classifier
+		indx16 := uint16(indx)
 		for tok,score := range tally {
 			if old,ok := t.ClassifierVar[tok]; ok {
 				temp := len(old)
 				newone := make([]Scorer,temp+1)
 				copy(newone,old)
-				newone[temp]=Scorer{uint16(indx),score}
+				newone[temp]=Scorer{indx16,score}
 				t.ClassifierVar[tok]=newone
 			} else {
 				newone := make([]Scorer,1)
-				newone[0]=Scorer{uint16(indx),score}
+				newone[0]=Scorer{indx16,score}
 				t.ClassifierVar[tok]=newone			
 			}
 		}
