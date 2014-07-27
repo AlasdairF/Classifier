@@ -307,45 +307,43 @@ func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 
 // Loads a classifier from a file previously saved with Save.
 func (t *Classifier) Load(filename string) error {
-	
+	// Open file for reading
 	fi, err := os.Open(filename)
 	if err !=nil {
 		return err
 	}
 	defer fi.Close()
-	
-    fz, err2 := gzip.NewReader(fi)
-	if err2 !=nil {
-		return err2
+	// Attached gzip reader
+    fz, err = gzip.NewReader(fi)
+	if err !=nil {
+		return err
 	}
 	defer fz.Close()
-	
-	decoder := gob.NewDecoder(fz)
-	err3 := decoder.Decode(&t)
-	if err3 !=nil {
-		return err3
+	// Pull with the gob decoder
+	decoder = gob.NewDecoder(fz)
+	err := decoder.Decode(&t)
+	if err !=nil {
+		return err
 	}
-	
 	return nil
 }
 
 // Saves classifier last created with Create to a file.
 func (t *Trainer) Save(filename string) error {
-	
+	// Open file for writing
 	fi, err := os.Create(filename)
 	if err !=nil {
 		return err
 	}
 	defer fi.Close()
-	
+	// Attach gzip writer
 	fz := gzip.NewWriter(fi)
 	defer fz.Close()
-	
+	// Push from the gob encoder
 	encoder := gob.NewEncoder(fz)
-	err2 := encoder.Encode(t.Classifier)
-	if err2 !=nil {
+	err = encoder.Encode(t.Classifier)
+	if err !=nil {
 		return err2
 	}
-	
 	return nil
 }
