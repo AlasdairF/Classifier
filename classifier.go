@@ -320,7 +320,7 @@ func (t *Classifier) Load(filename string) error {
 	}
 	defer fz.Close()
 	// Pull with the gob decoder
-	decoder = gob.NewDecoder(fz)
+	decoder := gob.NewDecoder(fz)
 	err = decoder.Decode(&t)
 	if err !=nil {
 		return err
