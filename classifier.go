@@ -1,6 +1,7 @@
 package classifier
 
 import (
+ "math"
  "math/rand"
  "errors"
  "fmt"
@@ -217,15 +218,16 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		// Enter tallys into classifier
 		indx16 := uint16(indx)
 		for tok,score := range tally {
+			scorelog := float32(math.Log(float64(score)))
 			if old,ok := t.ClassifierVar[tok]; ok {
 				temp := len(old)
 				newone := make([]Scorer,temp+1)
 				copy(newone,old)
-				newone[temp]=Scorer{indx16,score}
+				newone[temp]=Scorer{indx16,scorelog}
 				t.ClassifierVar[tok]=newone
 			} else {
 				newone := make([]Scorer,1)
-				newone[0]=Scorer{indx16,score}
+				newone[0]=Scorer{indx16,scorelog}
 				t.ClassifierVar[tok]=newone			
 			}
 		}
