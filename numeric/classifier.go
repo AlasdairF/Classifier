@@ -25,8 +25,8 @@ const number_of_ensembles = 20
 
 type Trainer struct {
 Classifier // inherits Classifier struct
-testDocs [][][]int64
-trainingTokens [][]int64
+testDocs [][][]int
+trainingTokens [][]int
 Category_index map[string]int // Category_index can be useful as it contains a map of cat => index, where index is the slice index of the category in Classifier.Categories
 category_ensemble_index map[string][number_of_ensembles]int
 num_test_docs int
@@ -36,11 +36,11 @@ ensembled bool
 
 type Classifier struct {
 Categories []string
-ClassifierVar map[int64][]Scorer
+ClassifierVar map[int][]Scorer
 }
 
 type word struct {
-tok int64
+tok int
 score float32
 }
 
@@ -84,12 +84,12 @@ func (t *Trainer) DefineCategories(categories []string) {
 		}
 		t.category_ensemble_index[category]=temp
 	}
-	t.testDocs = make([][][]int64,len(categories))
-	t.trainingTokens = make([][]int64,len(categories))
+	t.testDocs = make([][][]int,len(categories))
+	t.trainingTokens = make([][]int,len(categories))
 }
 
 // AddTrainingDoc adds a training document to the classifier.
-func (t *Trainer) AddTrainingDoc(category string, tokens []int64) error {
+func (t *Trainer) AddTrainingDoc(category string, tokens []int) error {
 	t.ensembled=false // Needs to be ensembled whenever a training doc is added
 	// Check to see if category exists already, if it doesn't then add it
 	indx,ok := t.Category_index[category]
@@ -100,7 +100,7 @@ func (t *Trainer) AddTrainingDoc(category string, tokens []int64) error {
 	l := len(t.trainingTokens[indx])
 	n := l+len(tokens)
 	if (n>cap(t.trainingTokens[indx])) {
-		newSlice := make([]int64, n, n*2)
+		newSlice := make([]int, n, n*2)
         copy(newSlice, t.trainingTokens[indx])
         t.trainingTokens[indx] = newSlice
 	} else {
@@ -115,7 +115,7 @@ func (t *Trainer) AddTrainingDoc(category string, tokens []int64) error {
 }
 
 // AddTestDoc adds a document for testing under the Test function.
-func (t *Trainer) AddTestDoc(category string, tokens []int64) error {
+func (t *Trainer) AddTestDoc(category string, tokens []int) error {
 	// Check to see if category exists already, if it doesn't then add it
 	indx,ok := t.Category_index[category]
 	if !ok {
@@ -124,7 +124,7 @@ func (t *Trainer) AddTestDoc(category string, tokens []int64) error {
 	// Check capacity and grow if necessary
 	l := len(t.testDocs[indx])
 	if (l==cap(t.testDocs[indx])) {
-		newSlice := make([][]int64, l+1, (l+1)*2)
+		newSlice := make([][]int, l+1, (l+1)*2)
         copy(newSlice, t.testDocs[indx])
         t.testDocs[indx] = newSlice
 	} else {
@@ -139,10 +139,10 @@ func (t *Trainer) AddTestDoc(category string, tokens []int64) error {
 // ensemble does most of the calculations and pruning for the classifier, which is then finished off by Create.
 func (t *Trainer) ensemble() {
 	// Initialize
-	total := uint64(0)
+	total := uint(0)
 	nlist := make([]int,len(t.Categories)*number_of_ensembles)
-	tokmap := make([]map[int64]uint,len(t.Categories)*number_of_ensembles)
-	bigmap := make(map[int64]uint)
+	tokmap := make([]map[int]uint,len(t.Categories)*number_of_ensembles)
+	bigmap := make(map[int]uint)
 	// Loop through all categories of training docs
 	for indx,cat := range t.Categories {
 		// Generate 20x ensembles of 50% tokens
@@ -152,8 +152,8 @@ func (t *Trainer) ensemble() {
 			ensembleindx := t.category_ensemble_index[cat][i]
 			tokloop := randomList(num_tokens,per_ensemble) // select 50% random sampling for this category
 			nlist[ensembleindx]=per_ensemble
-			total += uint64(per_ensemble)
-			tokmap[ensembleindx] = make(map[int64]uint)
+			total += uint(per_ensemble)
+			tokmap[ensembleindx] = make(map[int]uint)
 			for i2:=0; i2<per_ensemble; i2++ {
 				tok := t.trainingTokens[indx][tokloop[i2]]
 				tokmap[ensembleindx][tok]++
@@ -162,7 +162,7 @@ func (t *Trainer) ensemble() {
 		}
 	}
 	// And add to the overall counts
-	ensembleTokAvg := make(map[int64]float32)
+	ensembleTokAvg := make(map[int]float32)
 	l := float32(total)
 	for tok,count := range bigmap {
 		ensembleTokAvg[tok]=float32(count)/l
@@ -199,9 +199,9 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		t.ensembled=true
 	}
 	// Now build the classifier
-	t.ClassifierVar = make(map[int64][]Scorer)
+	t.ClassifierVar = make(map[int][]Scorer)
 	for indx,cat := range t.Categories { // loop through categories
-		tally := make(map[int64]float32) // create tally for scores from this category
+		tally := make(map[int]float32) // create tally for scores from this category
 		for i:=0; i<number_of_ensembles; i++ { // loop through ensemble categories
 			ensembleindx := t.category_ensemble_index[cat][i] // get the index for this ensemble category
 			l := len(t.ensembleContent[ensembleindx]) // get the number of tokens in this ensemble category
@@ -235,7 +235,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 }
 
 // Classify classifies tokens and returns a slice of float32 where each index is the same as the index for the category name in classifier.Categories, which is the same as the []string of categories originally past to DefineCategories.
-func (t *Classifier) Classify(tokens []int64) []float64 {
+func (t *Classifier) Classify(tokens []int) []float64 {
 	scoreboard := make([]float64,len(t.Categories))
 	for _,tok := range tokens {
 		if rules,ok := t.ClassifierVar[tok]; ok {
@@ -248,7 +248,7 @@ func (t *Classifier) Classify(tokens []int64) []float64 {
 }
 
 // ClassifySimple is a wrapper for Classify, it returns the name of the best category as a string, and the score of the best category as float32.
-func (t *Classifier) ClassifySimple(tokens []int64) (string, float64) {
+func (t *Classifier) ClassifySimple(tokens []int) (string, float64) {
 	scoreboard := t.Classify(tokens)
 	var bestscore float64
 	var bestcat int
