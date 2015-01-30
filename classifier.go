@@ -80,8 +80,7 @@ func (t *Trainer) DefineCategories(categories []string) {
 	t.Category_index = make(map[string]int)
 	// Now generate forward and reverse index for categories <-> ensembles <-> indices
 	t.Categories = categories
-	current := 0
-	var i2 int
+	var i2, current int
 	for i, category := range categories {
 		t.Category_index[category] = i
 		var temp [number_of_ensembles]int
@@ -97,7 +96,7 @@ func (t *Trainer) DefineCategories(categories []string) {
 
 // AddTrainingDoc adds a training document to the classifier.
 func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
-	t.ensembled=false // Needs to be ensembled whenever a training doc is added
+	t.ensembled = false // Needs to be ensembled whenever a training doc is added
 	// Check to see if category exists already, if it doesn't then add it
 	indx, ok := t.Category_index[category]
 	if !ok {
@@ -123,8 +122,8 @@ func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 // ensemble does most of the calculations and pruning for the classifier, which is then finished off by Create.
 func (t *Trainer) ensemble() {
 	// Initialize
-	nlist := make([]int,len(t.Categories)*number_of_ensembles)
-	tokmap := make([]map[string]uint,len(t.Categories)*number_of_ensembles)
+	nlist := make([]int, len(t.Categories) * number_of_ensembles)
+	tokmap := make([]map[string]uint, len(t.Categories) * number_of_ensembles)
 	bigmap := make(map[string]uint)
 	var i, i2, ensembleindx int
 	var total uint64
