@@ -54,13 +54,9 @@ You can also use any of the Classification functions below on your `Trainer` obj
 
 ## Classification
 
-Start the classifier:
-
-    classifier := new(classifier.Classifier)
-
 Load the classifier you previously saved:
 
-    err := classifier.Load(`myshiz.classifier`)
+    classifier, err := classifier.Load(`myshiz.classifier`)
 	
 If you need to reload the categories they are here as a slice of strings:
 
