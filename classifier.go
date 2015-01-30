@@ -103,7 +103,7 @@ func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
 		return errors.New(`AddTrainingDoc: Category '` + category + `' not defined`)
 	}
 	// Add tokens
-	append(t.trainingTokens[indx], tokens...)
+	t.trainingTokens[indx] = append(t.trainingTokens[indx], tokens...)
 	return nil
 }
 
@@ -115,7 +115,7 @@ func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 		return errors.New(`AddTestDoc: Category '` + category + `' not defined`)
 	}
 	// Check capacity and grow if necessary
-	t.testDocs = append(t.testDocs, tokens)
+	t.testDocs[indx] = append(t.testDocs[indx], tokens)
 	return nil
 }
 
@@ -371,7 +371,7 @@ func Load(filename string) (*Classifier, error) {
 	
 	// Return the new object
 	t := new(Classifier)
-	t.categories = categories
+	t.Categories = categories
 	t.rules = rules
 	return t, nil
 }
@@ -390,7 +390,7 @@ func (t *Trainer) Save(filename string) error {
 	var cat string
 	var lst []scorer
 	var res scorer
-	numcats := len(t.Categories)
+	numcats := uint16(len(t.Categories))
 	
 	w.Write16(numcats)
 	for _, cat = range t.Categories {
