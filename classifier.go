@@ -1,14 +1,21 @@
 package classifier
 
 import (
+ "github.com/AlasdairF/Custom"
+ "os"
  "math"
  "math/rand"
  "errors"
  "fmt"
- "os"
- "encoding/gob"
- "compress/gzip"
 )
+
+/*
+
+NOTE:
+	Maximum byte length of any token or category name is 255 bytes (UTF8).
+	Maximum number of categories is 65,536.
+
+*/
 
 // --------------- CONSTANTS ---------------
 
@@ -35,26 +42,25 @@ ensembled bool
 
 type Classifier struct {
 Categories []string
-ClassifierVar map[string][]Scorer
+rules map[string][]scorer
 }
 
 type word struct {
-tok string
-score float32
+ tok string
+ score float32
 }
 
-// You can ignore this. Scorer must be able to be exported (begin with a capital) so it can be accessed by the gob functionality used for Load & Save.
-type Scorer struct {
-Category uint16
-Score float32
+type scorer struct {
+ category uint16
+ score float32
 }
 
 // --------------- FUNCTIONS ---------------
 
 // randomList is a helper function to generate random lists of integers for the ensemble function. It does not need to be seeded since it is good for the random numbers to be the same for the same content.
 func randomList(num int, wanted int) []int {
-	output := make([]int,wanted)
-	used := make([]bool,num)
+	output := make([]int, wanted)
+	used := make([]bool, num)
 	var n int
 	for got:=0; got<wanted; { // while got<wanted
 		n = rand.Intn(num) // generate random number
@@ -107,7 +113,7 @@ func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 	// Check to see if category exists already, if it doesn't then add it
 	indx, ok := t.Category_index[category]
 	if !ok {
-		return errors.New(`AddTestDoc: Category '`+category+`' not defined`)
+		return errors.New(`AddTestDoc: Category '` + category + `' not defined`)
 	}
 	// Check capacity and grow if necessary
 	t.testDocs = append(t.testDocs, tokens)
@@ -188,10 +194,10 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	var i, i2, ensembleindx, l int
 	var indx16 uint16
 	var scorelog, score float32
-	var old []Scorer
+	var old []scorer
 	var ok bool
 	var tok string
-	t.ClassifierVar = make(map[string][]Scorer)
+	t.rules = make(map[string][]scorer)
 	for indx, cat := range t.Categories { // loop through categories
 		tally := make(map[string]float32) // create tally for scores from this category
 		for i=0; i<number_of_ensembles; i++ { // loop through ensemble categories
@@ -211,14 +217,14 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		indx16 = uint16(indx)
 		for tok, score = range tally {
 			scorelog = float32(math.Log(float64(score)))
-			if old, ok = t.ClassifierVar[tok]; ok {
+			if old, ok = t.rules[tok]; ok {
 				i2 = len(old)
-				newone := make([]Scorer, i2 + 1)
+				newone := make([]scorer, i2 + 1)
 				copy(newone, old)
-				newone[i2] = Scorer{indx16, scorelog}
-				t.ClassifierVar[tok] = newone
+				newone[i2] = scorer{indx16, scorelog}
+				t.rules[tok] = newone
 			} else {
-				t.ClassifierVar[tok] = []Scorer{Scorer{indx16, scorelog}}	
+				t.rules[tok] = []scorer{scorer{indx16, scorelog}}	
 			}
 		}
 	}
@@ -229,13 +235,13 @@ func (t *Classifier) Classify(tokens []string) []float64 {
 	var tok string
 	var ok bool
 	var i, l int
-	var rules []Scorer
+	var rules []scorer
 	scoreboard := make([]float64, len(t.Categories))
 	for _, tok = range tokens {
-		if rules, ok = t.ClassifierVar[tok]; ok {
+		if rules, ok = t.rules[tok]; ok {
 			l = len(rules)
 			for i=0; i<l; i++ {
-				scoreboard[rules[i].Category] += float64(rules[i].Score)
+				scoreboard[rules[i].category] += float64(rules[i].score)
 			}
 		}
 	}
@@ -286,7 +292,7 @@ func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 			// And the accuracy is:
 			accuracy = float32(correct)/float32(num_test_docs)
 			if verbose {
-				fmt.Printf("allowance %g, maxscore %g = %f (%d correct)\n",allowance,maxscore,accuracy,correct)
+				fmt.Printf("allowance %g, maxscore %g = %f (%d correct)\n", allowance, maxscore, accuracy, correct)
 			}
 			// Save the best accuracy
 			if accuracy > bestaccuracy {
@@ -298,50 +304,120 @@ func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 	}
 	if verbose {
 		fmt.Println(`BEST RESULT`)
-		fmt.Printf("allowance %g, maxscore %g = %f\n",bestallowance,bestmaxscore,bestaccuracy)
+		fmt.Printf("allowance %g, maxscore %g = %f\n", bestallowance, bestmaxscore, bestaccuracy)
 	}
 	return bestallowance, bestmaxscore, nil
 }
 
 // Loads a classifier from a file previously saved with Save.
-func (t *Classifier) Load(filename string) error {
+func Load(filename string) (*Classifier, error) {
 	// Open file for reading
 	fi, err := os.Open(filename)
-	if err !=nil {
+	if err != nil {
+		return nil, err
+	}
+	defer fi.Close()
+
+	// Attach reader
+	r, err := custom.NewReader(fi, 20480)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+	
+	var i uint16
+	numcats := r.Read16()
+	categories := make([]string, numcats)
+	for i=0; i<numcats; i++ {
+		categories[i] = r.ReadString8()
+	}
+	numrules := r.Read64()
+	
+	rules := make(map[string][]scorer)
+	var i2 uint64
+	var score float32
+	var id, n uint16
+	var cat string
+	if numcats < 256 {
+		for i2=0; i2<numrules; i2++ {
+			cat = r.ReadString8()
+			n = uint16(r.Read8())
+			lst := make([]scorer, n)
+			for i=0; i<n; i++ {
+				id = uint16(r.Read8())
+				score = r.ReadFloat32()
+				lst[i] = scorer{id, score}
+			}
+			rules[cat] = lst
+		}
+	} else {
+		for i2=0; i2<numrules; i2++ {
+			cat = r.ReadString8()
+			n = r.Read16()
+			lst := make([]scorer, n)
+			for i=0; i<n; i++ {
+				id = r.Read16()
+				score = r.ReadFloat32()
+				lst[i] = scorer{id, score}
+			}
+			rules[cat] = lst
+		}
+	}
+	
+	// Make sure we're at the end and the checksum is OK
+	err = r.EOF()
+	if err != nil {
+		return nil, err
+	}
+	
+	// Return the new object
+	t := new(Classifier)
+	t.categories = categories
+	t.rules = rules
+	return t, nil
+}
+
+func (t *Trainer) Save(filename string) error {
+	// Open file for writing
+	fi, err := os.Create(filename)
+	if err != nil {
 		return err
 	}
 	defer fi.Close()
-	// Attached gzip reader
-    fz, err := gzip.NewReader(fi)
-	if err !=nil {
-		return err
+	
+	w := custom.NewWriter(fi)
+	defer w.Close()
+	
+	var cat string
+	var lst []scorer
+	var res scorer
+	numcats := len(t.Categories)
+	
+	w.Write16(numcats)
+	for _, cat = range t.Categories {
+		w.WriteString8(cat)
 	}
-	defer fz.Close()
-	// Pull with the gob decoder
-	decoder := gob.NewDecoder(fz)
-	err = decoder.Decode(&t)
-	if err !=nil {
-		return err
+	w.Write64(uint64(len(t.rules)))
+
+	if numcats < 256 {
+		for cat, lst = range t.rules {
+			w.WriteString8(cat)
+			w.Write8(uint8(len(lst)))
+			for _, res = range lst {
+				w.Write8(uint8(res.category))
+				w.WriteFloat32(res.score)
+			}
+		}
+	} else {
+		for cat, lst = range t.rules {
+			w.Write16(uint16(len(lst)))
+			for _, res = range lst {
+				w.Write16(res.category)
+				w.WriteFloat32(res.score)
+			}
+		}
 	}
 	return nil
 }
 
-// Saves classifier last created with Create to a file.
-func (t *Trainer) Save(filename string) error {
-	// Open file for writing
-	fi, err := os.Create(filename)
-	if err !=nil {
-		return err
-	}
-	defer fi.Close()
-	// Attach gzip writer
-	fz := gzip.NewWriter(fi)
-	defer fz.Close()
-	// Push from the gob encoder
-	encoder := gob.NewEncoder(fz)
-	err = encoder.Encode(t.Classifier)
-	if err !=nil {
-		return err
-	}
-	return nil
-}
+
