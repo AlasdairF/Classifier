@@ -308,6 +308,14 @@ func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 	return bestallowance, bestmaxscore, nil
 }
 
+func MustLoad(filename string) *Classifier {
+	t, err := Load(filename)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 // Loads a classifier from a file previously saved with Save.
 func Load(filename string) (*Classifier, error) {
 	// Open file for reading
