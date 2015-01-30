@@ -162,7 +162,7 @@ func (t *Trainer) ensemble() {
 		for i=0; i<number_of_ensembles; i++ { // loop through ensemble categories
 			ensembleindx = t.category_ensemble_index[cat][i] // get the index for this ensemble category
 			l = len(tokmap[ensembleindx])
-			if l < len(ensembleContent) {
+			if l > len(ensembleContent) {
 				ensembleContent = make([]word, l)
 			}
 			i2 = 0
