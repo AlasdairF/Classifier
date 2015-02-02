@@ -78,7 +78,6 @@ func (t *Trainer) DefineCategories(categories []string) {
 	t.Category_index = make(map[string]int)
 	// Now generate forward and reverse index for categories <-> ensembles <-> indices
 	t.Categories = categories
-	var i2, current int
 	for i, category := range categories {
 		t.Category_index[category] = i
 	}
