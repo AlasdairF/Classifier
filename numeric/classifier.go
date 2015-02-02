@@ -32,8 +32,8 @@ const number_of_ensembles = 20
 
 type Trainer struct {
 Classifier // inherits Classifier struct
-TestDocs [][][]string
-TrainingTokens [][]string
+TestDocs [][][]uint64
+TrainingTokens [][]uint64
 Category_index map[string]int // Category_index can be useful as it contains a map of cat => index, where index is the slice index of the category in Classifier.Categories
 ensembleContent [][]word
 ensembled bool
@@ -41,11 +41,11 @@ ensembled bool
 
 type Classifier struct {
 Categories []string
-rules map[string][]scorer
+rules map[uint64][]scorer
 }
 
 type word struct {
- tok string
+ tok uint64
  score float32
 }
 
@@ -82,12 +82,12 @@ func (t *Trainer) DefineCategories(categories []string) {
 	for i, category := range categories {
 		t.Category_index[category] = i
 	}
-	t.TestDocs = make([][][]string, len(categories))
-	t.TrainingTokens = make([][]string, len(categories))
+	t.TestDocs = make([][][]uint64, len(categories))
+	t.TrainingTokens = make([][]uint64, len(categories))
 }
 
 // AddTrainingDoc adds a training document to the classifier.
-func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
+func (t *Trainer) AddTrainingDoc(category string, tokens []uint64) error {
 	t.ensembled = false // Needs to be ensembled whenever a training doc is added
 	// Check to see if category exists already, if it doesn't then add it
 	indx, ok := t.Category_index[category]
@@ -100,7 +100,7 @@ func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
 }
 
 // AddTestDoc adds a document for testing under the Test function.
-func (t *Trainer) AddTestDoc(category string, tokens []string) error {
+func (t *Trainer) AddTestDoc(category string, tokens []uint64) error {
 	// Check to see if category exists already, if it doesn't then add it
 	indx, ok := t.Category_index[category]
 	if !ok {
@@ -115,12 +115,12 @@ func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 func (t *Trainer) ensemble() {
 	// Initialize
 	nlist := make([]int, len(t.Categories) * number_of_ensembles)
-	tokmap := make([]map[string]uint, len(t.Categories) * number_of_ensembles)
-	bigmap := make(map[string]uint)
+	tokmap := make([]map[uint64]uint, len(t.Categories) * number_of_ensembles)
+	bigmap := make(map[uint64]uint)
 	var i, i2, indx, ensembleindx, num_tokens, per_ensemble int
 	var total uint64
 	var tokloop []int
-	var tok string
+	var tok uint64
 	numcats := len(t.Categories)
 	// Loop through all categories of training docs
 	for indx=0; indx<numcats; indx++ {
@@ -131,7 +131,7 @@ func (t *Trainer) ensemble() {
 			tokloop = randomList(num_tokens, per_ensemble) // select 50% random sampling for this category
 			nlist[ensembleindx] = per_ensemble
 			total += uint64(per_ensemble)
-			tokmap[ensembleindx] = make(map[string]uint)
+			tokmap[ensembleindx] = make(map[uint64]uint)
 			for i2=0; i2<per_ensemble; i2++ {
 				tok = t.TrainingTokens[indx][tokloop[i2]]
 				tokmap[ensembleindx][tok]++
@@ -141,7 +141,7 @@ func (t *Trainer) ensemble() {
 		}
 	}
 	// And add to the overall counts
-	ensembleTokAvg := make(map[string]float32)
+	ensembleTokAvg := make(map[uint64]float32)
 	avg := float32(total)
 	for tok, count := range bigmap {
 		ensembleTokAvg[tok] = float32(count) / avg
@@ -189,10 +189,10 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	var scorelog, score float32
 	var old []scorer
 	var ok bool
-	var tok string
-	t.rules = make(map[string][]scorer)
+	var tok uint64
+	t.rules = make(map[uint64][]scorer)
 	for indx, _ := range t.Categories { // loop through categories
-		tally := make(map[string]float32) // create tally for scores from this category
+		tally := make(map[uint64]float32) // create tally for scores from this category
 		for i=0; i<number_of_ensembles; i++ { // loop through ensemble categories
 			ensembleindx = (indx * number_of_ensembles) + i // get the index for this ensemble category
 			l = len(t.ensembleContent[ensembleindx]) // get the number of tokens in this ensemble category
@@ -224,8 +224,8 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 }
 
 // Classify classifies tokens and returns a slice of float32 where each index is the same as the index for the category name in classifier.Categories, which is the same as the []string of categories originally past to DefineCategories.
-func (t *Classifier) Classify(tokens []string) []float64 {
-	var tok string
+func (t *Classifier) Classify(tokens []uint64) []float64 {
+	var tok uint64
 	var ok bool
 	var rules []scorer
 	var obj scorer
@@ -241,7 +241,7 @@ func (t *Classifier) Classify(tokens []string) []float64 {
 }
 
 // ClassifySimple is a wrapper for Classify, it returns the name of the best category as a string, and the score of the best category as float32.
-func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
+func (t *Classifier) ClassifySimple(tokens []uint64) (string, float64) {
 	scoreboard := t.Classify(tokens)
 	var bestscore float64
 	var bestcat int
@@ -333,14 +333,14 @@ func Load(filename string) (*Classifier, error) {
 	}
 	numrules := r.Read64()
 	
-	rules := make(map[string][]scorer)
+	rules := make(map[uint64][]scorer)
 	var i2 uint64
 	var score float32
 	var id, n uint16
-	var tok string
+	var tok uint64
 	if numcats < 256 {
 		for i2=0; i2<numrules; i2++ {
-			tok = r.ReadString8()
+			tok = r.Read64Variable()
 			n = uint16(r.Read8())
 			lst := make([]scorer, n)
 			for i=0; i<n; i++ {
@@ -352,7 +352,7 @@ func Load(filename string) (*Classifier, error) {
 		}
 	} else {
 		for i2=0; i2<numrules; i2++ {
-			tok = r.ReadString8()
+			tok = r.Read64Variable()
 			n = r.Read16()
 			lst := make([]scorer, n)
 			for i=0; i<n; i++ {
@@ -388,7 +388,7 @@ func (t *Trainer) Save(filename string) error {
 	w := custom.NewWriter(fi)
 	defer w.Close()
 	
-	var tok string
+	var tok uint64
 	var lst []scorer
 	var res scorer
 	numcats := uint16(len(t.Categories))
@@ -401,7 +401,7 @@ func (t *Trainer) Save(filename string) error {
 
 	if numcats < 256 {
 		for tok, lst = range t.rules {
-			w.WriteString8(tok)
+			w.Write64Variable(tok)
 			w.Write8(uint8(len(lst)))
 			for _, res = range lst {
 				w.Write8(uint8(res.category))
@@ -410,7 +410,7 @@ func (t *Trainer) Save(filename string) error {
 		}
 	} else {
 		for tok, lst = range t.rules {
-			w.WriteString8(tok)
+			w.Write64Variable(tok)
 			w.Write16(uint16(len(lst)))
 			for _, res = range lst {
 				w.Write16(res.category)
