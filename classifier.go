@@ -90,8 +90,8 @@ func (t *Trainer) DefineCategories(categories []string) {
 		}
 		t.category_ensemble_index[category] = temp
 	}
-	t.testDocs = make([][][]string, len(categories))
-	t.trainingTokens = make([][]string, len(categories))
+	t.TestDocs = make([][][]string, len(categories))
+	t.TrainingTokens = make([][]string, len(categories))
 }
 
 // AddTrainingDoc adds a training document to the classifier.
@@ -103,7 +103,7 @@ func (t *Trainer) AddTrainingDoc(category string, tokens []string) error {
 		return errors.New(`AddTrainingDoc: Category '` + category + `' not defined`)
 	}
 	// Add tokens
-	t.trainingTokens[indx] = append(t.trainingTokens[indx], tokens...)
+	t.TrainingTokens[indx] = append(t.TrainingTokens[indx], tokens...)
 	return nil
 }
 
@@ -115,7 +115,7 @@ func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 		return errors.New(`AddTestDoc: Category '` + category + `' not defined`)
 	}
 	// Check capacity and grow if necessary
-	t.testDocs[indx] = append(t.testDocs[indx], tokens)
+	t.TestDocs[indx] = append(t.TestDocs[indx], tokens)
 	return nil
 }
 
@@ -132,7 +132,7 @@ func (t *Trainer) ensemble() {
 	// Loop through all categories of training docs
 	for indx, cat := range t.Categories {
 		// Generate 20x ensembles of 50% tokens
-		num_tokens := len(t.trainingTokens[indx])
+		num_tokens := len(t.TrainingTokens[indx])
 		per_ensemble := (num_tokens+1)/2
 		for i=0; i<number_of_ensembles; i++ {
 			ensembleindx = t.category_ensemble_index[cat][i]
@@ -141,7 +141,7 @@ func (t *Trainer) ensemble() {
 			total += uint64(per_ensemble)
 			tokmap[ensembleindx] = make(map[string]uint)
 			for i2=0; i2<per_ensemble; i2++ {
-				tok = t.trainingTokens[indx][tokloop[i2]]
+				tok = t.TrainingTokens[indx][tokloop[i2]]
 				tokmap[ensembleindx][tok]++
 				bigmap[tok]++
 			}
@@ -264,7 +264,7 @@ func (t *Classifier) ClassifySimple(tokens []string) (string, float64) {
 // Test tries 2,401 different combinations of allowance & maxscore then returns the values of allowance & maxscore which performs the best. Test requires an argument of true or false for verbose, if true Test will print all results to Stdout. 
 func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 	// Check there are test files
-	num_test_docs := len(t.testDocs)
+	num_test_docs := len(t.TestDocs)
 	if num_test_docs == 0 {
 		return 0, 0, errors.New(`Test: Add test files`)
 	}
@@ -279,11 +279,11 @@ func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 		for _, maxscore = range auto_maxscore { // loop through auto for maxscore
 			t.Create(allowance, maxscore) // build the classifier for allowance & maxscore
 			correct = 0
-			// Count the number of correct results from testDocs under this classifier
+			// Count the number of correct results from TestDocs under this classifier
 			for indx, cat = range t.Categories {
-				l = len(t.testDocs[indx])
+				l = len(t.TestDocs[indx])
 				for i=0; i<l; i++ {
-					if compare, _ = t.ClassifySimple(t.testDocs[indx][i]); compare == cat {
+					if compare, _ = t.ClassifySimple(t.TestDocs[indx][i]); compare == cat {
 						correct++
 					}
 				}
