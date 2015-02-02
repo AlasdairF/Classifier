@@ -32,8 +32,8 @@ const number_of_ensembles = 20
 
 type Trainer struct {
 Classifier // inherits Classifier struct
-testDocs [][][]string
-trainingTokens [][]string
+TestDocs [][][]string
+TrainingTokens [][]string
 Category_index map[string]int // Category_index can be useful as it contains a map of cat => index, where index is the slice index of the category in Classifier.Categories
 category_ensemble_index map[string][number_of_ensembles]int
 ensembleContent [][]word
