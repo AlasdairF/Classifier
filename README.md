@@ -9,8 +9,19 @@ For people who are not familiar with classifiers: you start with your list of ca
 
 ## Installation
 
-    go get github.com/AlasdairF/Classifier
+With `string` tokens:
 
+    go get github.com/AlasdairF/Classifier
+    
+Or `uint32` tokens:
+
+    go get github.com/AlasdairF/Classifier/uint32
+
+Or `uint64` tokens:
+
+    go get github.com/AlasdairF/Classifier/uint64
+
+The `uint32` and `uint64` classifiers are faster and several times more efficient on memory. It is possible to convert string tokens into `uint32` or `uint64` using [a suitable hashing function](http://github.com/AlasdairF/Hash) in case of extremely large training sets. This drastically reduces the memory requirements of the training while making no perceivable difference to the accuracy of the classification.
 	
 ## Training
 
