@@ -31,17 +31,18 @@ const number_of_ensembles = 20
 // --------------- STRUCTS ---------------
 
 type Trainer struct {
-Classifier // inherits Classifier struct
-TestDocs [][][]uint64
-TrainingTokens [][]uint64
-Category_index map[string]int // Category_index can be useful as it contains a map of cat => index, where index is the slice index of the category in Classifier.Categories
-ensembleContent [][]word
-ensembled bool
+ Classifier // inherits Classifier struct
+ testDocs [][][]uint64
+ numtestDocs int
+ TrainingTokens [][]uint64
+ Category_index map[string]int // Category_index can be useful as it contains a map of cat => index, where index is the slice index of the category in Classifier.Categories
+ ensembleContent [][]word
+ ensembled bool
 }
 
 type Classifier struct {
-Categories []string
-rules map[uint64][]scorer
+ Categories []string
+ rules map[uint64][]scorer
 }
 
 type word struct {
@@ -81,7 +82,7 @@ func (t *Trainer) DefineCategories(categories []string) {
 	for i, category := range categories {
 		t.Category_index[category] = i
 	}
-	t.TestDocs = make([][][]uint64, len(categories))
+	t.testDocs = make([][][]uint64, len(categories))
 	t.TrainingTokens = make([][]uint64, len(categories))
 }
 
@@ -106,7 +107,8 @@ func (t *Trainer) AddTestDoc(category string, tokens []uint64) error {
 		return errors.New(`AddTestDoc: Category '` + category + `' not defined`)
 	}
 	// Check capacity and grow if necessary
-	t.TestDocs[indx] = append(t.TestDocs[indx], tokens)
+	t.testDocs[indx] = append(t.testDocs[indx], tokens)
+	t.numtestDocs++
 	return nil
 }
 
@@ -256,10 +258,10 @@ func (t *Classifier) ClassifySimple(tokens []uint64) (string, float64) {
 // Test tries 2,401 different combinations of allowance & maxscore then returns the values of allowance & maxscore which performs the best. Test requires an argument of true or false for verbose, if true Test will print all results to Stdout. 
 func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 	// Check there are test files
-	num_test_docs := len(t.TestDocs)
-	if num_test_docs == 0 {
+	if t.numTestDocs == 0 {
 		return 0, 0, errors.New(`Test: Add test files`)
 	}
+	num_test_docs := float32(t.numTestDocs)
 	// Set some variables
 	var bestaccuracy, bestallowance, bestmaxscore, accuracy, allowance, maxscore float32
 	var i, indx, correct, l int
@@ -271,17 +273,17 @@ func (t *Trainer) Test(verbose bool) (float32, float32, error) {
 		for _, maxscore = range auto_maxscore { // loop through auto for maxscore
 			t.Create(allowance, maxscore) // build the classifier for allowance & maxscore
 			correct = 0
-			// Count the number of correct results from TestDocs under this classifier
+			// Count the number of correct results from testDocs under this classifier
 			for indx, cat = range t.Categories {
-				l = len(t.TestDocs[indx])
+				l = len(t.testDocs[indx])
 				for i=0; i<l; i++ {
-					if compare, _ = t.ClassifySimple(t.TestDocs[indx][i]); compare == cat {
+					if compare, _ = t.ClassifySimple(t.testDocs[indx][i]); compare == cat {
 						correct++
 					}
 				}
 			}
 			// And the accuracy is:
-			accuracy = float32(correct)/float32(num_test_docs)
+			accuracy = float32(correct) / num_test_docs
 			if verbose {
 				fmt.Printf("allowance %g, maxscore %g = %f (%d correct)\n", allowance, maxscore, accuracy, correct)
 			}
