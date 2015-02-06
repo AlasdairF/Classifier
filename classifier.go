@@ -108,7 +108,7 @@ func (t *Trainer) AddTestDoc(category string, tokens []string) error {
 	}
 	// Check capacity and grow if necessary
 	t.testDocs[indx] = append(t.testDocs[indx], tokens)
-	t.numtestDocs++
+	t.numTestDocs++
 	return nil
 }
 
