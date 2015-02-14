@@ -1,46 +1,42 @@
 ##Classifier
 
-This is a very fast and very memory efficient text classifier for [Go](http://golang.org/). It can train and classify thousands of documents in seconds. Why? Because most people who write classifiers have no concept of efficiency.
+This is a very fast and very memory efficient text classifier for [Go](http://golang.org/). It can train and classify thousands of documents in seconds. The resulting classifier can be saved and loaded from file very quickly, using its own custom file format designed for high speed applications. The classifier itself uses my [BinSearch](BinSearch) package as its structural backend, which is faster than a hashtable while using only 8 - 16 bytes of memory per token, with 5KB overhead (even word in the English language could be included in the classifier and the entire classifier would fit into 7MB of memory.)
 
-I based this classifier on my experience of trying many different classification techniques for the problem of document categorization, and this is my own implementation of what I have found works best. It uses an ensemble method to increase accuracy, which is similar to a Random Forest. This classifier is made specifically for document classification; it classifies based on token frequency and rarity whereby if category_1 has 0.01 frequency for a particular token, and the overall average frequency is 0.005 then this token will be given a score of Log(0.01 / 0.005) = 0.693 for this category. Twenty different ensembles of each category are generated, pruned and then combined. Additionally, this classifier is adaptive in that it can self-optimize through the `Test` function. I did try to implement more fancy stuff and make it re-train itself for higher accuracy, but it only ended up getting over-trained, so those features were removed. What you see here is the best I could do after months of trials. It is extremely accurate, fast, efficient and made for production use.
+This classifier was written after much experience of trying many different classification techniques for the problem of document categorization, and this is my own implementation of what I have found works best. It uses an ensemble method to increase accuracy, which is similar to what is more commonly known as a 'Random Forest' classifier. This classifier is made specifically for document classification; it classifies based on token frequency and rarity whereby if category_1 has 0.01 frequency for a particular token, and the overall average frequency is 0.005 then this token will be given a score of Log(0.01 / 0.005) = 0.693 for this category. Twenty different ensembles of each category are generated, pruned and then combined. Additionally, this classifier is adaptive in that it can self-optimize through the `Test` function. I attempted many other techniques that did not make it into the final version, because they were unsuccessful; this classifier is based on experience and practice rather than theory - it is accurate, fast, efficient and made for production use.
 
 For people who are not familiar with classifiers: you start with your list of categories and several (more is better) "training files" for each category, which have been hand picked to be good representatives of this category. You then load these categories and training files into the classifier and it magically makes a classifier object which can then be used to classify new documents into these categories.
 
 
 ## Installation
 
-With `string` tokens:
+With `[]byte` tokens:
 
     go get github.com/AlasdairF/Classifier
     
-Or `uint32` tokens:
-
-    go get github.com/AlasdairF/Classifier/uint32
-
-Or `uint64` tokens:
+With `uint64` tokens:
 
     go get github.com/AlasdairF/Classifier/uint64
 
-The `uint32` and `uint64` classifiers are faster and several times more efficient on memory. It is possible to convert string tokens into `uint32` or `uint64` using [a suitable hashing function](http://github.com/AlasdairF/Hash) in case of extremely large training sets. This drastically reduces the memory requirements of the training while making no perceivable difference to the accuracy of the classification.
+The `uint64` classifier is slightly faster and more efficient on memory. It is possible to convert `string` or `[]byte` tokens into `uint64` using [a suitable hashing function](http://github.com/AlasdairF/Hash) in case of extremely large training sets. This reduces the memory requirements of the training while making little or no perceivable difference to the accuracy of the classification. That said, the standard `[]byte` classifier is incredibly highly optimized already, so in most cases this is unnecessary.
 	
 ## Training
 
 Start the trainer:
 
-    classifier := new(classifier.Trainer)
+    obj := new(classifier.Trainer)
 	
-Define your categories, this must be a slice of strings: `[]string`.
+Define your categories, this must be a slice of a slice of bytes: `[][]byte`.
 
-	classifier.DefineCategories(categories)
+	obj.DefineCategories(categories)
 	
-Add training documents, category is a string, tokens is a slice of strings (or uint32/uint64 as imported).
+Add training documents, category is a slice of bytes `[]byte`, tokens is a slice of a slice of bytes `[][]byte` (or a slice of uint64 as imported).
 
-	err := classifier.AddTrainingDoc(category, tokens)
+	err := obj.AddTrainingDoc(category, tokens)
 	// and again for each training document
 	
 If you are going to use the `Test` feature to optimize for the best variables for training then you need to add test files. If you don't have any test files then you can add the training files as test files too, this will give you a higher than true accuracy report but it will still help the `Test` function determine the best variables for the classifier.
 
-	err := classifier.AddTestDoc(category, tokens)
+	err := obj.AddTestDoc(category, tokens)
 	// keep doing it for each one
 	
 The classifier uses two variables called `allowance` and `maxscore` to optimize the classifier. Both are `float32`. `allowance` means that any word with a score below this will not be included in the classifier. `maxscore` means that no word can be given a score of more than this in the classifier. It is best to let the `Test` function choose these for you.
@@ -48,45 +44,43 @@ The classifier uses two variables called `allowance` and `maxscore` to optimize 
 To use the `Test` function (once you've added training and test files) you only need to do as follows. Note that if `verbose` is set to true then you will get thousands of lines output to Stdout telling you the accuracy level of each test and which one was best; if it's set to false then it's silent. `Test` returns the best values for `allowance` and `maxscore`.
 
 	verbose := true
-    allowance, maxscore, err := classifier.Test(verbose)
+	allowance, maxscore, err := obj.Test(verbose)
 
 You can now create your classifier:
 
-	classifier.Create(allowance,maxscore)
+	obj.Create(allowance, maxscore)
 	
 Then save it to a file:
 
-    err := classifier.Save(`myshiz.classifier`)
+    err := obj.Save(`somedir/myshiz.classifier`)
 	
 You can also use any of the Classification functions below on your `Trainer` object, if you want to start classifying right away. You only need to create a new `Classifier` object if you are loading a classifier from a file since the `Trainer` object inherits all of the functions of the `Classifier` object.
-
-*Note: following common Go style, the `err` variables above denote where the function may return an error message if something goes wrong, if `err` is `nil` then nothing is wrong. Not all of the functions return an error variable. For example, `classifier.Create` does not return anything. In future I may add error reporting on all functions.*
-
 
 ## Classification
 
 Load the classifier you previously saved:
 
-    classifier, err := classifier.Load(`myshiz.classifier`)
+    obj, err := classifier.Load(`somedir/myshiz.classifier`)
 	
 If you need to reload the categories they are here as a slice of strings:
 
-    categories := classifier.Categories // []string
+    categories := obj.Categories // [][]byte
 
 Classify something:
 
-    scores := classifier.Classify(tokens)
+    scores := obj.Classify(tokens) // tokens is [][]byte
 	
-The above will give you a slice of `float64` where each index represents the index of the category in `classifier.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `float64` is the score for this category. You may need to sort this list.
+The above will give you a slice of `uint64` where each index represents the index of the category in `obj.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `uint64` is the score for this category (only meaningful relative to the other scores.) You may need to sort this list.
 
-To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do this, which returns the `string` of the category that this document best matches and its score as `float64`:
+To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do this, which returns the `[]byte` of the category that this document best matches and its score as `uint64`:
 
     category, score := classifier.ClassifySimple(tokens)
+    fmt.Println(`Best category was`, string(category), `with score`, score)
 	
 
-## Tokenization
+## Tokenization / Feature Extraction
 
-You do need to tokenize each document before training on it or classifying it, which means make it into a slice of strings (usually words) with each token standardized in some way. How you tokenize depends on what you are trying to classify. However you choose to tokenize, you must be sure to do it *exactly the same* to the training documents, test documents, and the documents you eventually classify.
+You do need to tokenize each document before training on it or classifying it, which means to extract `tokens` (usually words) from the document ready for classifying. How you tokenize depends on what you are trying to classify. However you choose to tokenize, you must be sure to do it *exactly the same* to the training documents, test documents, and the documents you eventually classify.
 
 I have written a [Tokenize](http://github.com/AlasdairF/Tokenize) package that works perfectly with this Classifier. I suggest you check that out.
 
