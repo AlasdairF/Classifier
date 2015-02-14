@@ -35,7 +35,7 @@ type Trainer struct {
  Classifier // inherits Classifier struct
  testDocs [][]binsearch.CounterBytes
  numTestDocs int
- trainingTokens [][]byte
+ trainingTokens [][][]byte
  categoryIndex binsearch.KeyValBytes
  ensembleContent [][]word
  ensembled bool
@@ -86,7 +86,7 @@ func (t *Trainer) DefineCategories(categories [][]byte) error {
 	}
 	t.categoryIndex.Build()
 	t.testDocs = make([][]binsearch.CounterBytes, len(categories))
-	t.trainingTokens = make([][]byte, len(categories))
+	t.trainingTokens = make([][][]byte, len(categories))
 	return nil
 }
 
@@ -244,7 +244,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 					res = res[0:l+1]
 					copy(res[i+1:], res[i:])
 				}
-				res[i] = []scorer{scorer{index16, scorelog}}
+				res[i] = []scorer{scorer{indx16, scorelog}}
 			}
 		}
 	}
@@ -284,14 +284,16 @@ func (t *Classifier) ClassifySimple(tokens [][]byte) ([]byte, uint64) {
 func (t *Trainer) classifyTestDoc(test *binsearch.CounterBytes) int {
 	var tok []byte
 	var v, i int
+	var v64 uint64
 	var eof, ok bool
 	var obj scorer
 	scoreboard := make([]uint64, len(t.Categories))
 	for !eof {
 		tok, v, eof = test.Next() // get the next one
 		if i, ok = t.rules.Find(tok); ok {
+			v64 = uint64(v)
 			for _, obj = range t.res[i] {
-				scoreboard[obj.category] += obj.score * v
+				scoreboard[obj.category] += obj.score * v64
 			}
 		}
 	}
@@ -458,7 +460,7 @@ func (t *Trainer) Save(filename string) error {
 			}
 		}
 	} else {
-		for _, lst = range t.rules {
+		for _, lst = range t.res {
 			w.Write16(uint16(len(lst)))
 			for _, obj = range lst {
 				w.Write16(obj.category)
