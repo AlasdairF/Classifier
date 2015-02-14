@@ -86,7 +86,7 @@ func (t *Trainer) DefineCategories(categories [][]byte) error {
 	}
 	t.categoryIndex.Build()
 	t.testDocs = make([][]binsearch.CounterBytes, len(categories))
-	t.TrainingTokens = make([][]byte, len(categories))
+	t.trainingTokens = make([][]byte, len(categories))
 	return nil
 }
 
@@ -96,10 +96,10 @@ func (t *Trainer) AddTrainingDoc(category []byte, tokens [][]byte) error {
 	// Check to see if category exists already, if it doesn't then add it
 	indx, ok := t.categoryIndex.Find(category)
 	if !ok {
-		return errors.New(`AddTrainingDoc: Category '` + category + `' not defined`)
+		return errors.New(`AddTrainingDoc: Category '` + string(category) + `' not defined`)
 	}
 	// Add tokens
-	t.TrainingTokens[indx] = append(t.TrainingTokens[indx], tokens...)
+	t.trainingTokens[indx] = append(t.trainingTokens[indx], tokens...)
 	return nil
 }
 
@@ -108,7 +108,7 @@ func (t *Trainer) AddTestDoc(category []byte, tokens [][]byte) error {
 	// Check to see if category exists already, if it doesn't then add it
 	indx, ok := t.categoryIndex.Find(category)
 	if !ok {
-		return errors.New(`AddTestDoc: Category '` + category + `' not defined`)
+		return errors.New(`AddTestDoc: Category '` + string(category) + `' not defined`)
 	}
 	// Check capacity and grow if necessary
 	t.testDocs[indx] = append(t.testDocs[indx], binsearch.CounterBytes{})
@@ -135,7 +135,7 @@ func (t *Trainer) ensemble() {
 	// Loop through all categories of training docs
 	for indx=0; indx<numcats; indx++ {
 		// Generate 20x ensembles of 50% tokens
-		num_tokens = len(t.TrainingTokens[indx])
+		num_tokens = len(t.trainingTokens[indx])
 		per_ensemble = (num_tokens + 1) / 2
 		for i=0; i<number_of_ensembles; i++ {
 			tokloop = randomList(num_tokens, per_ensemble) // select 50% random sampling for this category
@@ -143,7 +143,7 @@ func (t *Trainer) ensemble() {
 			total += per_ensemble
 			//tokmap[ensembleindx] = make(map[string]uint)
 			for i2=0; i2<per_ensemble; i2++ {
-				tok = t.TrainingTokens[indx][tokloop[i2]]
+				tok = t.trainingTokens[indx][tokloop[i2]]
 				tokmap[ensembleindx].Add(tok, 1)
 				ensembleTokAvg.Add(tok, 1)
 			}
@@ -177,7 +177,7 @@ func (t *Trainer) ensemble() {
 					av = (count * 10000000) / nlist[ensembleindx] // Calculatate frequency for this token within this ensemble
 					v, ok = ensembleTokAvg.Find(tok) // what's the average for this token overall?
 					if av > v && ok { // if this token frequency in this ensemble is greater than average for all categories and ensembles
-						ensembleContent[i2] = word{tok, (av * 1000) / ensembleTokAvg[tok]} // the result is the percentage over the average that this tokens occurs in this ensemble, multiplied by 1000 so it fits. It will always be >1 (or in this case >1000)
+						ensembleContent[i2] = word{tok, (av * 1000) / v} // the result is the percentage over the average that this tokens occurs in this ensemble, multiplied by 1000 so it fits. It will always be >1 (or in this case >1000)
 						i2++
 					}
 				}
@@ -207,7 +207,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	var exists, eof bool
 	var tok []byte
 	rules := new(binsearch.KeyBytes)
-	res := make([]scorer, 0, 1000)
+	res := make([][]scorer, 0, 500)
 	
 	for indx, _ := range t.Categories { // loop through categories
 		tally := new(binsearch.CounterBytes) // create tally for scores from this category
@@ -236,7 +236,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 			} else {
 				l = len(res)
 				if l == cap(res) {
-					tmp := make([][3]uint64, l + 1, (l * 2) + 1)
+					tmp := make([][]scorer, l + 1, (l * 2) + 1)
 					copy(tmp, res[0:i])
 					copy(tmp[i+1:], res[i:])
 					res = tmp
