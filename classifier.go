@@ -85,7 +85,7 @@ func (t *Trainer) DefineCategories(categories [][]byte) error {
 		}
 	}
 	t.categoryIndex.Build()
-	t.testDocs = make([][]binsearch.KeyValBytes, len(categories))
+	t.testDocs = make([][]binsearch.CounterBytes, len(categories))
 	t.TrainingTokens = make([][]byte, len(categories))
 	return nil
 }
