@@ -7,15 +7,15 @@ This classifier was written after much experience of trying many different class
 For people who are not familiar with classifiers: you start with your list of categories and several (more is better) "training files" for each category, which have been hand picked to be good representatives of this category. You then load these categories and training files into the classifier and it magically makes a classifier object which can then be used to classify new documents into these categories.
 
 
-## Installation
+## Importing
 
 With `[]byte` tokens:
 
-    go get github.com/AlasdairF/Classifier
+    import "github.com/AlasdairF/Classifier"
     
 With `uint64` tokens:
 
-    go get github.com/AlasdairF/Classifier/uint64
+    import "github.com/AlasdairF/Classifier/uint64"
 
 The `uint64` classifier is slightly faster and more efficient on memory. It is possible to convert `string` or `[]byte` tokens into `uint64` using [a suitable hashing function](http://github.com/AlasdairF/Hash) in case of extremely large training sets. This reduces the memory requirements of the training while making little or no perceivable difference to the accuracy of the classification. That said, the standard `[]byte` classifier is incredibly highly optimized already, so in most cases this is unnecessary.
 	
