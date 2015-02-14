@@ -171,6 +171,7 @@ func (t *Trainer) ensemble() {
 			}
 			// Loop through all tokens in this ensemble
 			i2 = 0
+			tokmap[ensembleindx].Reset()
 			for eof = false; !eof; {
 				tok, count, eof = tokmap[ensembleindx].Next() // get the next one
 				if count >= 2 { // there must be at least 2 occurances of this token in this ensemble
@@ -226,6 +227,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		// Enter tallys into classifier
 		indx16 = uint16(indx)
 		
+		tally.Reset()
 		for eof = false; !eof; {
 			tok, score, eof = tally.Next() // get the next one
 			scorelog = uint64(math.Log(float64(score) / 1000) * 1000)
@@ -287,6 +289,7 @@ func (t *Trainer) classifyTestDoc(test *binsearch.CounterBytes) int {
 	var eof, ok bool
 	var obj scorer
 	scoreboard := make([]uint64, len(t.Categories))
+	test.Reset()
 	for !eof {
 		tok, v, eof = test.Next() // get the next one
 		if i, ok = t.rules.Find(tok); ok {
