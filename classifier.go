@@ -203,7 +203,6 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	var i, ensembleindx, score, l int
 	var indx16 uint16
 	var scorelog uint64
-	var old []scorer
 	var exists, eof bool
 	var tok []byte
 	rules := new(binsearch.KeyBytes)
