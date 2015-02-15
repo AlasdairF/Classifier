@@ -201,7 +201,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	}
 	// Now build the classifier
 	allowanceint, maxscoreint := int(allowance * 1000), int(maxscore * 1000)
-	var i, ensembleindx, score, l int
+	var i, ensembleindx, score int
 	var indx16 uint16
 	var scorelog uint64
 	var exists, eof bool
