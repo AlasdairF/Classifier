@@ -206,9 +206,26 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	var scorelog uint64
 	var exists, eof bool
 	var tok []byte
-	rules := new(binsearch.KeyBytes)
-	res := make([][]scorer, 0, 500)
 	
+	// First loop through and calculate exactly how many words will be included in the classifier
+	dupfinder := new(binsearch.CounterBytes) // create tally for scores from this category
+	for indx, _ := range t.Categories { // loop through categories
+		for i=0; i<number_of_ensembles; i++ { // loop through ensemble categories
+			for _, obj := range t.ensembleContent[(indx * number_of_ensembles) + i] {
+				if obj.score >= allowanceint { // If the score is greater than the allowance
+					dupfinder.Add(obj.tok, 0)
+				}
+			}
+		}
+	}
+	
+	// Convert the tally into a KeyBytes structure, which is the dictionary of tokens
+	dupfinder.Build()
+	rules := dupfinder.Copy()
+	dupfinder = nil
+	res := make([][]scorer, rules.Len())
+	
+	// Now calculate the score for each dictionary token for each category
 	for indx, _ := range t.Categories { // loop through categories
 		tally := new(binsearch.CounterBytes) // create tally for scores from this category
 		for i=0; i<number_of_ensembles; i++ { // loop through ensemble categories
@@ -231,22 +248,11 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		for eof = false; !eof; {
 			tok, score, eof = tally.Next() // get the next one
 			scorelog = uint64(math.Log(float64(score) / 1000) * 1000)
-			i, exists = rules.Add(tok)
-			if exists {
-				res[i] = append(res[i], scorer{indx16, scorelog})
-			} else {
-				l = len(res)
-				if l == cap(res) {
-					tmp := make([][]scorer, l + 1, (l * 2) + 1)
-					copy(tmp, res[0:i])
-					copy(tmp[i+1:], res[i:])
-					res = tmp
-				} else {
-					res = res[0:l+1]
-					copy(res[i+1:], res[i:])
-				}
-				res[i] = []scorer{scorer{indx16, scorelog}}
+			i, exists = rules.Find(tok)
+			if !exists {
+				panic(errors.New(`Panic caused by bug in BinSearch package, please submit a bug report at github.com/AlasdairF/BinSearch`))
 			}
+			res[i] = append(res[i], scorer{indx16, scorelog})
 		}
 	}
 }
