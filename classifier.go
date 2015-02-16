@@ -255,6 +255,9 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 			res[i] = append(res[i], scorer{indx16, scorelog})
 		}
 	}
+	
+	t.res = res
+	t.rules = *rules
 }
 
 // Classify classifies tokens and returns a slice of uint64 where each index is the same as the index for the category name in classifier.Categories, which is the same as the []string of categories originally past to DefineCategories.
