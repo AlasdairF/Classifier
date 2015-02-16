@@ -204,7 +204,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	var i, ensembleindx, score int
 	var indx16 uint16
 	var scorelog uint64
-	var exists, eof bool
+	var eof bool
 	var tok uint64
 	
 	// First loop through and calculate exactly how many words will be included in the classifier
@@ -248,11 +248,10 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		for eof = false; !eof; {
 			tok, score, eof = tally.Next() // get the next one
 			scorelog = uint64(math.Log(float64(score) / 1000) * 1000)
-			i, exists = rules.Find(tok)
-			if !exists {
-				panic(errors.New(`Panic caused by bug in BinSearch package, please submit a bug report at github.com/AlasdairF/BinSearch`))
+			if scorelog > 0 {
+				i, _ = rules.Find(tok)
+				res[i] = append(res[i], scorer{indx16, scorelog})
 			}
-			res[i] = append(res[i], scorer{indx16, scorelog})
 		}
 	}
 	
