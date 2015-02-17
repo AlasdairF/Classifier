@@ -6,7 +6,7 @@ This classifier was written after much experience of trying many different class
 
 For people who are not familiar with classifiers: you start with your list of categories and several (more is better) "training files" for each category, which have been hand picked to be good representatives of this category. You then load these categories and training files into the classifier and it magically makes a classifier object which can then be used to classify new documents into these categories.
 
-*Due to the use of [BinSearch](http://github.com/AlasdairF/BinSearch) as the backend, the maximum size of any individual category or token length is 64 bytes (i.e. `[65]byte`).*
+*Due to the use of [BinSearch](http://github.com/AlasdairF/BinSearch) as the backend, the maximum size of any individual category or token length is 64 bytes inclusive (i.e. `[65]byte`).*
 
 
 ## Importing
