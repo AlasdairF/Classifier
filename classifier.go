@@ -171,15 +171,16 @@ func (t *Trainer) ensemble() {
 			}
 			// Loop through all tokens in this ensemble
 			i2 = 0
-			tokmap[ensembleindx].Reset()
-			for eof = false; !eof; {
-				tok, count, eof = tokmap[ensembleindx].Next() // get the next one
-				if count >= 2 { // there must be at least 2 occurances of this token in this ensemble
-					av = (count * 10000000) / nlist[ensembleindx] // Calculatate frequency for this token within this ensemble
-					v, ok = ensembleTokAvg.Find(tok) // what's the average for this token overall?
-					if av > v && ok { // if this token frequency in this ensemble is greater than average for all categories and ensembles
-						ensembleContent[i2] = word{tok, (av * 1000) / v} // the result is the percentage over the average that this tokens occurs in this ensemble, multiplied by 1000 so it fits. It will always be >1 (or in this case >1000)
-						i2++
+			if tokmap[ensembleindx].Reset() {
+				for eof = false; !eof; {
+					tok, count, eof = tokmap[ensembleindx].Next() // get the next one
+					if count >= 2 { // there must be at least 2 occurances of this token in this ensemble
+						av = (count * 10000000) / nlist[ensembleindx] // Calculatate frequency for this token within this ensemble
+						v, ok = ensembleTokAvg.Find(tok) // what's the average for this token overall?
+						if av > v && ok { // if this token frequency in this ensemble is greater than average for all categories and ensembles
+							ensembleContent[i2] = word{tok, (av * 1000) / v} // the result is the percentage over the average that this tokens occurs in this ensemble, multiplied by 1000 so it fits. It will always be >1 (or in this case >1000)
+							i2++
+						}
 					}
 				}
 			}
@@ -244,13 +245,14 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 		// Enter tallys into classifier
 		indx16 = uint16(indx)
 		
-		tally.Reset()
-		for eof = false; !eof; {
-			tok, score, eof = tally.Next() // get the next one
-			scorelog = uint64(math.Log(float64(score) / 1000) * 1000)
-			if scorelog > 0 {
-				i, _ = rules.Find(tok)
-				res[i] = append(res[i], scorer{indx16, scorelog})
+		if tally.Reset() {
+			for eof = false; !eof; {
+				tok, score, eof = tally.Next() // get the next one
+				scorelog = uint64(math.Log(float64(score) / 1000) * 1000)
+				if scorelog > 0 {
+					i, _ = rules.Find(tok)
+					res[i] = append(res[i], scorer{indx16, scorelog})
+				}
 			}
 		}
 	}
@@ -297,13 +299,14 @@ func (t *Trainer) classifyTestDoc(test *binsearch.CounterBytes) int {
 	var eof, ok bool
 	var obj scorer
 	scoreboard := make([]uint64, len(t.Categories))
-	test.Reset()
-	for !eof {
-		tok, v, eof = test.Next() // get the next one
-		if i, ok = t.rules.Find(tok); ok {
-			v64 = uint64(v)
-			for _, obj = range t.res[i] {
-				scoreboard[obj.category] += obj.score * v64
+	if test.Reset() {
+		for !eof {
+			tok, v, eof = test.Next() // get the next one
+			if i, ok = t.rules.Find(tok); ok {
+				v64 = uint64(v)
+				for _, obj = range t.res[i] {
+					scoreboard[obj.category] += obj.score * v64
+				}
 			}
 		}
 	}
