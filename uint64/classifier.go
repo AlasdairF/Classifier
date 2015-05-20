@@ -36,7 +36,7 @@ type Trainer struct {
  testDocs [][]binsearch.CounterUint64
  numTestDocs int
  trainingTokens [][][]byte
- categoryIndex binsearch.KeyValBytes
+ categoryIndex binsearch.KeyValUint64
  ensembleContent [][]word
  ensembled bool
 }
