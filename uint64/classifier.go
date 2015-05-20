@@ -222,7 +222,7 @@ func (t *Trainer) Create(allowance float32, maxscore float32) {
 	
 	// Convert the tally into a KeyBytes structure, which is the dictionary of tokens
 	dupfinder.Build()
-	rules := dupfinder.Copy()
+	rules := dupfinder.KeyUint64()
 	dupfinder = nil
 	res := make([][]scorer, rules.Len())
 	
