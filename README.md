@@ -2,7 +2,7 @@
 
 This is a very fast and very memory efficient text classifier for [Go](http://golang.org/). It can train and classify thousands of documents in seconds. The resulting classifier can be saved and loaded from file very quickly, using its own custom file format designed for high speed applications. The classifier itself uses my [BinSearch](http://github.com/AlasdairF/BinSearch) package as its structural backend, which is faster than a hashtable while using only 8 - 16 bytes of memory per token, with 5KB overhead (every word in the English language could be included in the classifier and the entire classifier would fit into 7MB of memory.)
 
-This classifier was written after much experience of trying many different classification techniques for the problem of document categorization, and this is my own implementation of what I have found works best. It uses an ensemble method to increase accuracy, which is similar to what is more commonly known as a 'Random Forest' classifier. This classifier is made specifically for document classification; it classifies based on token frequency and rarity whereby if category_1 has 0.01 frequency for a particular token, and the overall average frequency is 0.005 then this token will be given a score of Log(0.01 / 0.005) = 0.693 for this category. Twenty different ensembles of each category are generated, pruned and then combined. Additionally, this classifier is adaptive in that it can self-optimize through the `Test` function. I attempted many other techniques that did not make it into the final version, because they were unsuccessful; this classifier is based on experience and practice rather, not only theory - it is accurate, fast, efficient and made for production use in high-bandwidth applications.
+This classifier was written after much experience of trying many different classification techniques for the problem of document categorization, and this is my own implementation of what I have found works best. It uses an ensemble method to increase accuracy, which is similar to what is more commonly known as a 'Random Forest' classifier. This classifier is made specifically for document classification; it classifies based on token frequency and rarity whereby if category_1 has 0.01 frequency for a particular token, and the overall average frequency is 0.005 then this token will be given a score of Log(0.01 / 0.005) = 0.693 for this category. Twenty different ensembles of each category are generated, pruned and then combined. Additionally, this classifier is adaptive in that it can self-optimize through the `Test` function. I attempted many other techniques that did not make it into the final version, because they were unsuccessful; this classifier is based on experience and practice, not only theory - it is accurate, fast, efficient and made for production use in high-bandwidth applications.
 
 For people who are not familiar with classifiers: you start with your list of categories and several (more is better) "training files" for each category, which have been hand picked to be good representatives of this category. You then load these categories and training files into the classifier and it magically makes a classifier object which can then be used to classify new documents into these categories.
 
@@ -63,8 +63,10 @@ You can also use any of the Classification functions below on your `Trainer` obj
 Load the classifier you previously saved:
 
     obj, err := classifier.Load(`somedir/myshiz.classifier`)
+    // *OR*
+    obj := classifier.MustLoad(`somedir/myshiz.classifier`)
 	
-If you need to reload the categories they are here as a slice of strings:
+If want to retrieve a list of the categories for printing then they are here as a slice of a slice bytes:
 
     categories := obj.Categories // [][]byte
 
@@ -72,9 +74,18 @@ Classify something:
 
     scores := obj.Classify(tokens) // tokens is [][]byte
 	
-The above will give you a slice of `uint64` where each index represents the index of the category in `obj.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `uint64` is the score for this category (only meaningful relative to the other scores.) You may need to sort this list.
+The above will give you a slice of `uint64` where each index represents the index of the category in `obj.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `uint64` is the score for this category (only meaningful relative to the other scores.) You may need to sort this list, for which I would recommend my optimized sorting function [Sort/Uint16Uint64](http://github.com/AlasdairF/Sort/Uint16Uint64) like this:
 
-To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do this, which returns the `[]byte` of the category that this document best matches and its score as `uint64`:
+     import "github.com/AlasdairF/Sort/Uint16Uint64"
+     sorted := sortUint16Uint64.New(scores)
+     sortUint16Uint64.Desc(sorted)
+     // You could then output this as follows
+     cats := obj.Categories
+     for i, score := range sorted {
+     	fmt.Println(i, `Category`, string(cats[score.K]), `Score`, score.V)
+     }
+
+To make things easy, if you want *only* the best matching category and score, and not the results for each category, then you can do the following, which returns the `[]byte` of the category that this document best matches and its score as `uint64`:
 
     category, score := classifier.ClassifySimple(tokens)
     fmt.Println(`Best category was`, string(category), `with score`, score)
