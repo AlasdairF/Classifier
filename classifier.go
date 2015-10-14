@@ -13,7 +13,7 @@ import (
 /*
 
 NOTE:
-	Maximum byte length of any token or category name is 255 bytes (UTF8).
+	Maximum byte length of any token or category name is 65 bytes (UTF8).
 	Maximum number of categories is 65,536.
 
 */
