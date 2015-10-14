@@ -66,9 +66,9 @@ Classify something:
 
     scores := obj.Classify(tokens) // tokens is [][]byte
 	
-The above will give you a slice of `uint64` where each index represents the index of the category in `obj.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `uint64` is the score for this category (only meaningful relative to the other scores.) You may need to sort this list, for which I would recommend my optimized sorting function [Sort/Uint16Uint64](http://github.com/AlasdairF/Sort/Uint16Uint64) like this:
+The above will give you a slice of `uint64` where each index represents the index of the category in `obj.Categories` (which is exactly the same as what you gave originally to `DefineCategories`) and the `uint64` is the score for this category (only meaningful relative to the other scores.) You may need to sort this list, for which I would recommend my optimized sorting function [Sort/Uint16Uint64](http://github.com/AlasdairF/Sort) like this:
 
-     import "github.com/AlasdairF/Sort/Uint16Uint64"
+     // import "github.com/AlasdairF/Sort/Uint16Uint64"
      sorted := sortUint16Uint64.New(scores)
      sortUint16Uint64.Desc(sorted)
      // You could then output this as follows
