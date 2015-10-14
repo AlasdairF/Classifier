@@ -11,15 +11,7 @@ Due to the use of [BinSearch](http://github.com/AlasdairF/BinSearch) as the back
 
 ## Importing
 
-With `[]byte` tokens:
-
     import "github.com/AlasdairF/Classifier"
-    
-With `uint64` tokens:
-
-    import "github.com/AlasdairF/Classifier/uint64"
-
-The `uint64` classifier is slightly faster and more efficient on memory. It is possible to convert `string` or `[]byte` tokens into `uint64` using [a suitable hashing function](http://github.com/AlasdairF/Hash) in case of extremely large training sets. This reduces the memory requirements of the training while making little or no perceivable difference to the accuracy of the classification. That said, the standard `[]byte` classifier is incredibly highly optimized already, so in most cases this is unnecessary.
 	
 ## Training
 
