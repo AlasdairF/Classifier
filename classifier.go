@@ -3,7 +3,6 @@ package classifier
 import (
  "github.com/AlasdairF/BinSearch"
  "github.com/AlasdairF/Custom"
- "compress/zlib"
  "os"
  "math"
  "math/rand"
@@ -386,12 +385,8 @@ func Load(filename string) (*Classifier, error) {
 	defer fi.Close()
 	
 	// Attach reader
-	z, err := zlib.NewReader(fi)
-	if err != nil {
-		return nil, err
-	}
-	defer z.Close()
-	r := custom.NewReader(z, 20480)
+	r := custom.NewZlibReader(fi, 20480)
+	defer r.Close()
 	
 	var i uint16
 	numcats := r.ReadUint16()
@@ -447,13 +442,13 @@ func Load(filename string) (*Classifier, error) {
 
 func (t *Trainer) Save(filename string) error {
 	// Open file for writing
-	fi, err := os.Create(filename)
+	fi, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(0644))
 	if err != nil {
 		return err
 	}
 	defer fi.Close()
 	
-	w := custom.NewWriter(zlib.NewWriter(fi))
+	w := custom.NewZlibWriter(fi)
 	defer w.Close() // this will automatically flush and then close the underlying zlib.Writer
 	
 	var lst []scorer
