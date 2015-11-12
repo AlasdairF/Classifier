@@ -383,43 +383,44 @@ func Load(filename string) (*Classifier, error) {
 		return nil, err
 	}
 	defer fi.Close()
-
+	
 	// Attach reader
-	r, err := custom.NewReader(fi, 20480)
+	z, err := zlib.NewReader(fi)
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer z.Close()
+	r := custom.NewReader(z, 20480)
 	
 	var i uint16
-	numcats := r.Read16()
+	numcats := r.ReadUint16()
 	categories := make([][]byte, numcats)
 	for i=0; i<numcats; i++ {
-		categories[i] = r.Readx(int(r.Read8()))
+		categories[i] = r.Readx(int(r.ReadByte()))
 	}
-	numrules := r.Read64()
+	numrules := r.ReadUint64()
 	res := make([][]scorer, numrules)
 	
 	var i2, score uint64
 	var id, n uint16
 	if numcats < 256 {
 		for i2=0; i2<numrules; i2++ {
-			n = uint16(r.Read8())
+			n = uint16(r.ReadByte())
 			lst := make([]scorer, n)
 			for i=0; i<n; i++ {
-				id = uint16(r.Read8())
-				score = r.Read64Variable()
+				id = uint16(r.ReadByte())
+				score = r.ReadUint64Variable()
 				lst[i] = scorer{id, score}
 			}
 			res[i2] = lst
 		}
 	} else {
 		for i2=0; i2<numrules; i2++ {
-			n = r.Read16()
+			n = r.ReadUint16()
 			lst := make([]scorer, n)
 			for i=0; i<n; i++ {
-				id = r.Read16()
-				score = r.Read64Variable()
+				id = r.ReadUint16()
+				score = r.ReadUint64Variable()
 				lst[i] = scorer{id, score}
 			}
 			res[i2] = lst
@@ -451,33 +452,33 @@ func (t *Trainer) Save(filename string) error {
 	}
 	defer fi.Close()
 	
-	w := custom.NewWriter(fi)
-	defer w.Close()
+	w := custom.NewWriter(zlib.NewWriter(fi))
+	defer w.Close() // this will automatically flush and then close the underlying zlib.Writer
 	
 	var lst []scorer
 	var obj scorer
 	numcats := uint16(len(t.Categories))
 	
-	w.Write16(numcats)
+	w.WriteUint16(numcats)
 	for _, cat := range t.Categories {
 		w.WriteString8(string(cat))
 	}
-	w.Write64(uint64(len(t.res)))
+	w.WriteUint64(uint64(len(t.res)))
 
 	if numcats < 256 {
 		for _, lst = range t.res {
-			w.Write8(uint8(len(lst)))
+			w.WriteByte(uint8(len(lst)))
 			for _, obj = range lst {
-				w.Write8(uint8(obj.category))
-				w.Write64Variable(obj.score)
+				w.WriteByte(uint8(obj.category))
+				w.WriteUint64Variable(obj.score)
 			}
 		}
 	} else {
 		for _, lst = range t.res {
-			w.Write16(uint16(len(lst)))
+			w.WriteUint16(uint16(len(lst)))
 			for _, obj = range lst {
-				w.Write16(obj.category)
-				w.Write64Variable(obj.score)
+				w.WriteUint16(obj.category)
+				w.WriteUint64Variable(obj.score)
 			}
 		}
 	}
