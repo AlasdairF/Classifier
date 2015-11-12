@@ -3,6 +3,7 @@ package classifier
 import (
  "github.com/AlasdairF/BinSearch"
  "github.com/AlasdairF/Custom"
+ "compress/zlib"
  "os"
  "math"
  "math/rand"
