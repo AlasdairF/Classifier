@@ -385,7 +385,7 @@ func Load(filename string) (*Classifier, error) {
 	defer fi.Close()
 	
 	// Attach reader
-	r := custom.NewZlibReader(fi, 20480)
+	r := custom.NewZlibReader(fi)
 	defer r.Close()
 	
 	var i uint16
